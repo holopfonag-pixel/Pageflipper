@@ -3,13 +3,6 @@
  * منطق موقع "for lunch time" لقراءة الروايات.
  * المحتوى نفسه موجود في novel-data.js — هذا الملف لا يحتاج تعديلاً
  * إلا إذا أردت تغيير سلوك الموقع.
- *
- * ميزة الخطوط التلقائية: عند التحميل، يكتشف السكربت لغة متصفح
- * الزائر (navigator.language) ويحدد إحدى أربع مجموعات خطوط —
- * عربية / إنجليزية / فرنسية / افتراضية — ثم يعرض في "إعدادات
- * القراءة" أربعة خطوط مناسبة لتلك اللغة، مع خط عربي احتياطي
- * مضمّن في كل مجموعة (fallback) بحيث يبقى نص الرواية نفسه —
- * وهو عربي دائماً — أنيقاً مهما كانت لغة الزائر.
  */
 (function () {
   "use strict";
@@ -18,6 +11,7 @@
      أدوات مساعدة
      ------------------------------------------------------------ */
   const EASTERN_DIGITS = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+
   function toArabicDigits(value) {
     return String(value).replace(/[0-9]/g, (d) => EASTERN_DIGITS[+d]);
   }
@@ -40,99 +34,49 @@
     return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
   }
 
-  /* ------------------------------------------------------------
-     مجموعات الخطوط حسب اللغة (أربعة خطوط لكل لغة)
-     كل خط ينتهي بخط عربي احتياطي حتى يبقى نص الفصل أنيقاً
-     دوماً، أياً كانت اللغة المكتشفة.
-     ------------------------------------------------------------ */
-  const LANG_PROFILES = {
-    ar: {
-      label: "العربية",
-      fonts: [
-        { id: "amiri", label: "أميري", stack: "'Amiri', 'Noto Naskh Arabic', serif" },
-        { id: "notoNaskh", label: "نسخ نوتو", stack: "'Noto Naskh Arabic', 'Amiri', serif" },
-        { id: "cairo", label: "القاهرة", stack: "'Cairo', 'Tajawal', sans-serif" },
-        { id: "tajawal", label: "تجوّل", stack: "'Tajawal', 'Cairo', sans-serif" },
-      ],
-    },
-    en: {
-      label: "الإنجليزية",
-      fonts: [
-        { id: "playfair", label: "Playfair", stack: "'Playfair Display', 'Amiri', serif" },
-        { id: "lora", label: "Lora", stack: "'Lora', 'Amiri', serif" },
-        { id: "merriweather", label: "Merriweather", stack: "'Merriweather', 'Amiri', serif" },
-        { id: "inter", label: "Inter", stack: "'Inter', 'Tajawal', sans-serif" },
-      ],
-    },
-    fr: {
-      label: "الفرنسية",
-      fonts: [
-        { id: "ebGaramond", label: "EB Garamond", stack: "'EB Garamond', 'Amiri', serif" },
-        { id: "cormorant", label: "Cormorant", stack: "'Cormorant Garamond', 'Amiri', serif" },
-        { id: "libreBaskerville", label: "Libre Baskerville", stack: "'Libre Baskerville', 'Amiri', serif" },
-        { id: "nunitoSans", label: "Nunito Sans", stack: "'Nunito Sans', 'Tajawal', sans-serif" },
-      ],
-    },
-    default: {
-      label: "لغتك",
-      fonts: [
-        { id: "spectral", label: "Spectral", stack: "'Spectral', 'Amiri', serif" },
-        { id: "ptSerif", label: "PT Serif", stack: "'PT Serif', 'Amiri', serif" },
-        { id: "sourceSerif", label: "Source Serif 4", stack: "'Source Serif 4', 'Amiri', serif" },
-        { id: "workSans", label: "Work Sans", stack: "'Work Sans', 'Tajawal', sans-serif" },
-      ],
-    },
+  const FONT_STACKS = {
+    amiri: "'Amiri', serif",
+    notoNaskh: "'Noto Naskh Arabic', serif",
+    cairo: "'Cairo', sans-serif",
+    tajawal: "'Tajawal', sans-serif",
   };
 
-  /* روابط Google Fonts لكل مجموعة (غير العربية، فهي محمّلة سلفاً
-     في index.html). تُحقن عند الحاجة فقط لتفادي تحميل خطوط زائدة. */
-  const GOOGLE_FONT_HREF = {
-    en: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500;600;700&family=Merriweather:wght@300;400;700&family=Inter:wght@400;500;600;700&display=swap",
-    fr: "https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Nunito+Sans:wght@400;600;700&display=swap",
-    default: "https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=PT+Serif:wght@400;700&family=Source+Serif+4:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap",
+  const LOCALE_DEFAULT_FONT = {
+    ar: "amiri",
+    fr: "cairo",
+    en: "tajawal",
+    default: "notoNaskh",
   };
 
-  function loadGoogleFontsForProfile(profileKey) {
-    if (profileKey === "ar") return; // محمّلة سلفاً في <head>
-    if (document.getElementById("langFontLink")) return;
-    const href = GOOGLE_FONT_HREF[profileKey];
-    if (!href) return;
-    const link = document.createElement("link");
-    link.id = "langFontLink";
-    link.rel = "stylesheet";
-    link.href = href;
-    document.head.appendChild(link);
+  function getDeviceLocale() {
+    return (
+      (navigator.languages && navigator.languages[0]) ||
+      navigator.language ||
+      Intl.DateTimeFormat().resolvedOptions().locale ||
+      "ar"
+    ).toLowerCase();
   }
 
-  function detectLangProfile() {
-    try {
-      const langs =
-        navigator.languages && navigator.languages.length
-          ? navigator.languages
-          : [navigator.language || navigator.userLanguage || "ar"];
-      const sub = String(langs[0] || "ar").toLowerCase().split("-")[0];
-      if (sub === "ar") return "ar";
-      if (sub === "en") return "en";
-      if (sub === "fr") return "fr";
-      return "default";
-    } catch (e) {
-      return "ar";
-    }
+  function getLocaleCode(locale) {
+    return String(locale || "").split("-")[0];
+  }
+
+  function getDefaultFontForLocale(locale) {
+    const code = getLocaleCode(locale);
+    return LOCALE_DEFAULT_FONT[code] || LOCALE_DEFAULT_FONT.default;
   }
 
   /* ------------------------------------------------------------
-     الحالة العامة (كل شيء هنا يبقى في الذاكرة فقط لهذه الجلسة —
-     لا يُستخدم أي تخزين متصفح حتى تعمل المعاينة في كل مكان.
-     إن أردت أن تبقى الإشارات المرجعية والإعدادات محفوظة بعد إغلاق
-     المتصفح على موقعك الحقيقي، استبدل القراءة/الكتابة هنا بـ
-     localStorage الخاص بالمتصفح.)
+     الحالة العامة
      ------------------------------------------------------------ */
+  const deviceLocale = getDeviceLocale();
+
   const state = {
     chapterIndex: 0,
-    langProfile: "ar",
-    font: "amiri",
+    locale: deviceLocale,
+    font: getDefaultFontForLocale(deviceLocale),
     fontSize: 19,
-    theme: "dark",
+    theme: "sepia",
     bookmarks: [], // { chapterId, paraIndex, chapterTitle, snippet }
   };
 
@@ -162,7 +106,6 @@
     settingsPopover: document.getElementById("settingsPopover"),
     settingsClose: document.getElementById("settingsClose"),
     fontOptions: document.getElementById("fontOptions"),
-    langHint: document.getElementById("langHint"),
     fontDec: document.getElementById("fontDec"),
     fontInc: document.getElementById("fontInc"),
     fontSizeLabel: document.getElementById("fontSizeLabel"),
@@ -184,18 +127,16 @@
 
     const isOngoing = NOVEL.status === "ongoing";
     els.novelStatus.textContent = isOngoing ? "مستمرة" : "منتهية";
+    els.novelStatus.classList.remove("ongoing", "completed");
     els.novelStatus.classList.add(isOngoing ? "ongoing" : "completed");
 
     els.novelSynopsis.textContent = NOVEL.synopsis;
 
-    // الغلاف: إن لم تُحدَّد صورة، يبقى لوحاً مزخرفاً بانتظار غلاف
-    // الرواية الحقيقي — لا حاجة لأي صورة مؤقتة.
-    if (NOVEL.coverImage) {
-      els.novelCover.style.setProperty("--cover-url", `url('${NOVEL.coverImage}')`);
-      els.novelCover.classList.add("has-image");
-    } else {
-      els.novelCover.textContent = NOVEL.title;
-    }
+    els.novelCover.classList.remove("has-image");
+    els.novelCover.classList.add("empty");
+    els.novelCover.style.removeProperty("--cover-url");
+    els.novelCover.textContent = "أضف الغلاف لاحقًا";
+    els.novelCover.setAttribute("aria-label", "غلاف فارغ لإضافته لاحقًا");
   }
 
   function renderTOC() {
@@ -239,7 +180,7 @@
     els.chapterTitle.textContent = chapter.title;
 
     const minutes = computeReadingMinutes(chapter);
-    els.readingTime.textContent = `⏱ وقت القراءة المقدَّر: ${arabicMinutesLabel(minutes)}`;
+    els.readingTime.textContent = `وقت القراءة المقدّر: ${arabicMinutesLabel(minutes)}`;
 
     els.chapterBody.innerHTML = "";
     chapter.paragraphs.forEach((text, paraIndex) => {
@@ -250,7 +191,11 @@
       bmBtn.type = "button";
       bmBtn.className = "para-bookmark";
       bmBtn.setAttribute("aria-label", "إشارة مرجعية لهذه الفقرة");
-      bmBtn.innerHTML = '<span aria-hidden="true">🔖</span>';
+      bmBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-svg">
+          <path d="M7 4.5A1.5 1.5 0 0 1 8.5 3h7A1.5 1.5 0 0 1 17 4.5V21l-5-3-5 3V4.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+        </svg>
+      `;
       bmBtn.dataset.paraIndex = String(paraIndex);
       bmBtn.addEventListener("click", () => toggleBookmark(chapter.id, paraIndex, text));
 
@@ -290,6 +235,7 @@
     const pct = scrollable > 0 ? (el.scrollTop / scrollable) * 100 : 0;
     els.progressFill.style.width = `${Math.min(100, Math.max(0, pct))}%`;
   }
+
   els.reader.addEventListener("scroll", updateProgressBar, { passive: true });
   window.addEventListener("resize", updateProgressBar);
 
@@ -333,6 +279,7 @@
       );
       btn.classList.toggle("is-active", isSaved);
     });
+
     const count = state.bookmarks.length;
     els.bookmarksBadge.hidden = count === 0;
     els.bookmarksBadge.textContent = toArabicDigits(count);
@@ -343,13 +290,15 @@
     if (state.bookmarks.length === 0) {
       const empty = document.createElement("p");
       empty.className = "bookmarks-empty";
-      empty.textContent = "لم تحفظ أي إشارة مرجعية بعد. اضغط 🔖 بجانب أي فقرة لحفظها.";
+      empty.textContent = "لم تحفظ أي إشارة مرجعية بعد. اضغط على الأيقونة بجانب أي فقرة لحفظها.";
       els.bookmarksList.appendChild(empty);
       return;
     }
+
     state.bookmarks.forEach((b) => {
       const li = document.createElement("li");
       li.className = "bookmark-item";
+
       const btn = document.createElement("button");
       btn.type = "button";
       btn.innerHTML = `
@@ -372,53 +321,25 @@
           }
         });
       });
+
       li.appendChild(btn);
       els.bookmarksList.appendChild(li);
     });
   }
 
   /* ------------------------------------------------------------
-     إعدادات القراءة: اللغة/الخط، الحجم، المظهر
+     إعدادات القراءة
      ------------------------------------------------------------ */
+  function setFont(fontKey) {
+    const safeFont = FONT_STACKS[fontKey] ? fontKey : getDefaultFontForLocale(state.locale);
+    state.font = safeFont;
 
-  // يبني شرائح اختيار الخط (أربعة) المناسبة للغة المكتشفة،
-  // ويكتب تلميحاً صغيراً يوضح أي لغة اكتُشفت.
-  function buildFontChips(profileKey) {
-    const profile = LANG_PROFILES[profileKey] || LANG_PROFILES.ar;
-    els.fontOptions.innerHTML = "";
-    profile.fonts.forEach((f) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "option-chip";
-      btn.dataset.font = f.id;
-      btn.style.fontFamily = f.stack;
-      btn.textContent = f.label;
-      els.fontOptions.appendChild(btn);
-    });
-    if (els.langHint) {
-      els.langHint.textContent = `🌐 لغة متصفحك: ${profile.label} — إليك خطوطاً تناسبها`;
-    }
-  }
+    document.documentElement.style.setProperty("--font-reading", FONT_STACKS[safeFont]);
+    document.documentElement.style.setProperty("--font-display", FONT_STACKS[safeFont]);
 
-  function setFont(fontId) {
-    const profile = LANG_PROFILES[state.langProfile] || LANG_PROFILES.ar;
-    const entry = profile.fonts.find((f) => f.id === fontId) || profile.fonts[0];
-    state.font = entry.id;
-    document.documentElement.style.setProperty("--font-reading", entry.stack);
-    document.documentElement.style.setProperty("--font-ui", entry.stack);
     els.fontOptions.querySelectorAll(".option-chip").forEach((chip) => {
-      chip.classList.toggle("is-active", chip.dataset.font === entry.id);
+      chip.classList.toggle("is-active", chip.dataset.font === safeFont);
     });
-  }
-
-  // يشغَّل مرة واحدة عند التحميل: يكتشف اللغة، يحمّل خطوطها إن لزم،
-  // يبني الشرائح، ويطبّق أول خط في مجموعتها كافتراضي.
-  function initLanguageFonts() {
-    const profileKey = detectLangProfile();
-    state.langProfile = profileKey;
-    loadGoogleFontsForProfile(profileKey);
-    buildFontChips(profileKey);
-    setFont(LANG_PROFILES[profileKey].fonts[0].id);
   }
 
   function setFontSize(size) {
@@ -439,8 +360,10 @@
     const chip = e.target.closest(".option-chip");
     if (chip) setFont(chip.dataset.font);
   });
+
   els.fontDec.addEventListener("click", () => setFontSize(state.fontSize - 1));
   els.fontInc.addEventListener("click", () => setFontSize(state.fontSize + 1));
+
   els.themeOptions.addEventListener("click", (e) => {
     const sw = e.target.closest(".theme-swatch");
     if (sw) setTheme(sw.dataset.theme);
@@ -453,19 +376,20 @@
   els.nextBtn.addEventListener("click", () => goToChapter(state.chapterIndex + 1));
 
   /* ------------------------------------------------------------
-     فتح/إغلاق القوائم المنبثقة (الإعدادات والإشارات المرجعية)
+     فتح/إغلاق القوائم المنبثقة
      ------------------------------------------------------------ */
   function openPopover(popoverEl, btnEl) {
     popoverEl.hidden = false;
     btnEl.setAttribute("aria-expanded", "true");
   }
+
   function closePopover(popoverEl, btnEl) {
     popoverEl.hidden = true;
     btnEl.setAttribute("aria-expanded", "false");
   }
+
   function togglePopover(popoverEl, btnEl) {
     if (popoverEl.hidden) {
-      // أغلق أي قائمة أخرى مفتوحة أولاً
       [els.settingsPopover, els.bookmarksPopover].forEach((p) => {
         if (p !== popoverEl) p.hidden = true;
       });
@@ -476,11 +400,14 @@
   }
 
   els.settingsBtn.addEventListener("click", () => togglePopover(els.settingsPopover, els.settingsBtn));
+
   els.settingsClose.addEventListener("click", () => closePopover(els.settingsPopover, els.settingsBtn));
+
   els.bookmarksBtn.addEventListener("click", () => {
     renderBookmarksPopover();
     togglePopover(els.bookmarksPopover, els.bookmarksBtn);
   });
+
   els.bookmarksClose.addEventListener("click", () => closePopover(els.bookmarksPopover, els.bookmarksBtn));
 
   document.addEventListener("click", (e) => {
@@ -491,6 +418,7 @@
     ) {
       closePopover(els.settingsPopover, els.settingsBtn);
     }
+
     if (
       !els.bookmarksPopover.hidden &&
       !els.bookmarksPopover.contains(e.target) &&
@@ -509,40 +437,48 @@
   });
 
   /* ------------------------------------------------------------
-     قائمة الفهرس على الجوال (Drawer)
+     قائمة الفهرس على الجوال
      ------------------------------------------------------------ */
   function openSidebar() {
     els.sidebar.classList.add("is-open");
     els.scrim.hidden = false;
     els.tocToggle.setAttribute("aria-expanded", "true");
   }
+
   function closeSidebar() {
     els.sidebar.classList.remove("is-open");
     els.scrim.hidden = true;
     els.tocToggle.setAttribute("aria-expanded", "false");
   }
+
   els.tocToggle.addEventListener("click", () => {
     els.sidebar.classList.contains("is-open") ? closeSidebar() : openSidebar();
   });
+
   els.scrim.addEventListener("click", closeSidebar);
 
   /* ------------------------------------------------------------
-     حماية بسيطة من النسخ (رادع وليس حماية مطلقة)
+     حماية بسيطة من النسخ
      ------------------------------------------------------------ */
   function shieldNote() {
-    showToast("🔒 هذا المحتوى محمي من النسخ");
+    showToast("هذا المحتوى محمي من النسخ");
   }
+
   document.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     shieldNote();
   });
+
   document.addEventListener("selectstart", (e) => e.preventDefault());
   document.addEventListener("dragstart", (e) => e.preventDefault());
+
   document.addEventListener("copy", (e) => {
     e.preventDefault();
     shieldNote();
   });
+
   document.addEventListener("cut", (e) => e.preventDefault());
+
   document.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
     const blockedCombo = (e.ctrlKey || e.metaKey) && ["c", "u", "s", "p"].includes(k);
@@ -553,9 +489,10 @@
   });
 
   /* ------------------------------------------------------------
-     التنبيهات (Toast)
+     التنبيهات
      ------------------------------------------------------------ */
   let toastTimer = null;
+
   function showToast(message) {
     els.toast.textContent = message;
     els.toast.hidden = false;
@@ -574,7 +511,7 @@
     renderChapter();
     renderBookmarksPopover();
 
-    initLanguageFonts();
+    setFont(state.font);
     setFontSize(state.fontSize);
     setTheme(document.documentElement.getAttribute("data-theme") || state.theme);
   }
