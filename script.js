@@ -3,6 +3,13 @@
  * منطق موقع "for lunch time" لقراءة الروايات.
  * المحتوى نفسه موجود في novel-data.js — هذا الملف لا يحتاج تعديلاً
  * إلا إذا أردت تغيير سلوك الموقع.
+ *
+ * ميزة الخطوط التلقائية: عند التحميل، يكتشف السكربت لغة متصفح
+ * الزائر (navigator.language) ويحدد إحدى أربع مجموعات خطوط —
+ * عربية / إنجليزية / فرنسية / افتراضية — ثم يعرض في "إعدادات
+ * القراءة" أربعة خطوط مناسبة لتلك اللغة، مع خط عربي احتياطي
+ * مضمّن في كل مجموعة (fallback) بحيث يبقى نص الرواية نفسه —
+ * وهو عربي دائماً — أنيقاً مهما كانت لغة الزائر.
  */
 (function () {
   "use strict";
@@ -33,12 +40,85 @@
     return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
   }
 
-  const FONT_STACKS = {
-    amiri: "'Amiri', serif",
-    notoNaskh: "'Noto Naskh Arabic', serif",
-    cairo: "'Cairo', sans-serif",
-    tajawal: "'Tajawal', sans-serif",
+  /* ------------------------------------------------------------
+     مجموعات الخطوط حسب اللغة (أربعة خطوط لكل لغة)
+     كل خط ينتهي بخط عربي احتياطي حتى يبقى نص الفصل أنيقاً
+     دوماً، أياً كانت اللغة المكتشفة.
+     ------------------------------------------------------------ */
+  const LANG_PROFILES = {
+    ar: {
+      label: "العربية",
+      fonts: [
+        { id: "amiri", label: "أميري", stack: "'Amiri', 'Noto Naskh Arabic', serif" },
+        { id: "notoNaskh", label: "نسخ نوتو", stack: "'Noto Naskh Arabic', 'Amiri', serif" },
+        { id: "cairo", label: "القاهرة", stack: "'Cairo', 'Tajawal', sans-serif" },
+        { id: "tajawal", label: "تجوّل", stack: "'Tajawal', 'Cairo', sans-serif" },
+      ],
+    },
+    en: {
+      label: "الإنجليزية",
+      fonts: [
+        { id: "playfair", label: "Playfair", stack: "'Playfair Display', 'Amiri', serif" },
+        { id: "lora", label: "Lora", stack: "'Lora', 'Amiri', serif" },
+        { id: "merriweather", label: "Merriweather", stack: "'Merriweather', 'Amiri', serif" },
+        { id: "inter", label: "Inter", stack: "'Inter', 'Tajawal', sans-serif" },
+      ],
+    },
+    fr: {
+      label: "الفرنسية",
+      fonts: [
+        { id: "ebGaramond", label: "EB Garamond", stack: "'EB Garamond', 'Amiri', serif" },
+        { id: "cormorant", label: "Cormorant", stack: "'Cormorant Garamond', 'Amiri', serif" },
+        { id: "libreBaskerville", label: "Libre Baskerville", stack: "'Libre Baskerville', 'Amiri', serif" },
+        { id: "nunitoSans", label: "Nunito Sans", stack: "'Nunito Sans', 'Tajawal', sans-serif" },
+      ],
+    },
+    default: {
+      label: "لغتك",
+      fonts: [
+        { id: "spectral", label: "Spectral", stack: "'Spectral', 'Amiri', serif" },
+        { id: "ptSerif", label: "PT Serif", stack: "'PT Serif', 'Amiri', serif" },
+        { id: "sourceSerif", label: "Source Serif 4", stack: "'Source Serif 4', 'Amiri', serif" },
+        { id: "workSans", label: "Work Sans", stack: "'Work Sans', 'Tajawal', sans-serif" },
+      ],
+    },
   };
+
+  /* روابط Google Fonts لكل مجموعة (غير العربية، فهي محمّلة سلفاً
+     في index.html). تُحقن عند الحاجة فقط لتفادي تحميل خطوط زائدة. */
+  const GOOGLE_FONT_HREF = {
+    en: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500;600;700&family=Merriweather:wght@300;400;700&family=Inter:wght@400;500;600;700&display=swap",
+    fr: "https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&family=Nunito+Sans:wght@400;600;700&display=swap",
+    default: "https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=PT+Serif:wght@400;700&family=Source+Serif+4:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap",
+  };
+
+  function loadGoogleFontsForProfile(profileKey) {
+    if (profileKey === "ar") return; // محمّلة سلفاً في <head>
+    if (document.getElementById("langFontLink")) return;
+    const href = GOOGLE_FONT_HREF[profileKey];
+    if (!href) return;
+    const link = document.createElement("link");
+    link.id = "langFontLink";
+    link.rel = "stylesheet";
+    link.href = href;
+    document.head.appendChild(link);
+  }
+
+  function detectLangProfile() {
+    try {
+      const langs =
+        navigator.languages && navigator.languages.length
+          ? navigator.languages
+          : [navigator.language || navigator.userLanguage || "ar"];
+      const sub = String(langs[0] || "ar").toLowerCase().split("-")[0];
+      if (sub === "ar") return "ar";
+      if (sub === "en") return "en";
+      if (sub === "fr") return "fr";
+      return "default";
+    } catch (e) {
+      return "ar";
+    }
+  }
 
   /* ------------------------------------------------------------
      الحالة العامة (كل شيء هنا يبقى في الذاكرة فقط لهذه الجلسة —
@@ -49,9 +129,10 @@
      ------------------------------------------------------------ */
   const state = {
     chapterIndex: 0,
+    langProfile: "ar",
     font: "amiri",
     fontSize: 19,
-    theme: "sepia",
+    theme: "dark",
     bookmarks: [], // { chapterId, paraIndex, chapterTitle, snippet }
   };
 
@@ -81,6 +162,7 @@
     settingsPopover: document.getElementById("settingsPopover"),
     settingsClose: document.getElementById("settingsClose"),
     fontOptions: document.getElementById("fontOptions"),
+    langHint: document.getElementById("langHint"),
     fontDec: document.getElementById("fontDec"),
     fontInc: document.getElementById("fontInc"),
     fontSizeLabel: document.getElementById("fontSizeLabel"),
@@ -106,6 +188,8 @@
 
     els.novelSynopsis.textContent = NOVEL.synopsis;
 
+    // الغلاف: إن لم تُحدَّد صورة، يبقى لوحاً مزخرفاً بانتظار غلاف
+    // الرواية الحقيقي — لا حاجة لأي صورة مؤقتة.
     if (NOVEL.coverImage) {
       els.novelCover.style.setProperty("--cover-url", `url('${NOVEL.coverImage}')`);
       els.novelCover.classList.add("has-image");
@@ -294,14 +378,47 @@
   }
 
   /* ------------------------------------------------------------
-     إعدادات القراءة: الخط، الحجم، المظهر
+     إعدادات القراءة: اللغة/الخط، الحجم، المظهر
      ------------------------------------------------------------ */
-  function setFont(fontKey) {
-    state.font = fontKey;
-    document.documentElement.style.setProperty("--font-reading", FONT_STACKS[fontKey]);
-    els.fontOptions.querySelectorAll(".option-chip").forEach((chip) => {
-      chip.classList.toggle("is-active", chip.dataset.font === fontKey);
+
+  // يبني شرائح اختيار الخط (أربعة) المناسبة للغة المكتشفة،
+  // ويكتب تلميحاً صغيراً يوضح أي لغة اكتُشفت.
+  function buildFontChips(profileKey) {
+    const profile = LANG_PROFILES[profileKey] || LANG_PROFILES.ar;
+    els.fontOptions.innerHTML = "";
+    profile.fonts.forEach((f) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option-chip";
+      btn.dataset.font = f.id;
+      btn.style.fontFamily = f.stack;
+      btn.textContent = f.label;
+      els.fontOptions.appendChild(btn);
     });
+    if (els.langHint) {
+      els.langHint.textContent = `🌐 لغة متصفحك: ${profile.label} — إليك خطوطاً تناسبها`;
+    }
+  }
+
+  function setFont(fontId) {
+    const profile = LANG_PROFILES[state.langProfile] || LANG_PROFILES.ar;
+    const entry = profile.fonts.find((f) => f.id === fontId) || profile.fonts[0];
+    state.font = entry.id;
+    document.documentElement.style.setProperty("--font-reading", entry.stack);
+    document.documentElement.style.setProperty("--font-ui", entry.stack);
+    els.fontOptions.querySelectorAll(".option-chip").forEach((chip) => {
+      chip.classList.toggle("is-active", chip.dataset.font === entry.id);
+    });
+  }
+
+  // يشغَّل مرة واحدة عند التحميل: يكتشف اللغة، يحمّل خطوطها إن لزم،
+  // يبني الشرائح، ويطبّق أول خط في مجموعتها كافتراضي.
+  function initLanguageFonts() {
+    const profileKey = detectLangProfile();
+    state.langProfile = profileKey;
+    loadGoogleFontsForProfile(profileKey);
+    buildFontChips(profileKey);
+    setFont(LANG_PROFILES[profileKey].fonts[0].id);
   }
 
   function setFontSize(size) {
@@ -457,7 +574,7 @@
     renderChapter();
     renderBookmarksPopover();
 
-    setFont(state.font);
+    initLanguageFonts();
     setFontSize(state.fontSize);
     setTheme(document.documentElement.getAttribute("data-theme") || state.theme);
   }
