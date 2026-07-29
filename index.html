@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="dark">
+<html lang="ar" dir="rtl" data-theme="sepia">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>for lunch time — قراءة روايات</title>
-<meta name="description" content="موقع لقراءة الروايات على شكل فصول قصيرة، بطعم استراحة الغداء." />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>for lunch time — قراءة روايات</title>
+  <meta name="description" content="موقع لقراءة الروايات على شكل فصول قصيرة، بطعم استراحة الغداء." />
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -21,18 +21,28 @@
   <header class="site-header">
     <div class="brand">
       <span class="brand-mark">for lunch time</span>
-      <span class="brand-tagline">قراءة قصيرة، بطعم استراحة الغداء</span>
+      <span class="brand-tagline">قراءة قصيرة، بطابع هادئ</span>
     </div>
+
     <div class="header-actions">
       <button type="button" class="icon-btn" id="bookmarksBtn" aria-haspopup="dialog" aria-expanded="false" aria-label="الإشارات المرجعية">
-        <span aria-hidden="true">🔖</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-svg">
+          <path d="M7 4.5A1.5 1.5 0 0 1 8.5 3h7A1.5 1.5 0 0 1 17 4.5V21l-5-3-5 3V4.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
         <span class="badge" id="bookmarksBadge" hidden>0</span>
       </button>
+
       <button type="button" class="icon-btn" id="settingsBtn" aria-haspopup="dialog" aria-expanded="false" aria-label="إعدادات القراءة">
-        <span aria-hidden="true">⚙</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-svg">
+          <path d="M12 8.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M19 12a7.4 7.4 0 0 0-.1-1l2-1.5-1.8-3.1-2.4 1a7 7 0 0 0-1.7-1l-.4-2.6H9.4L9 6.4a7 7 0 0 0-1.7 1l-2.4-1L3.1 9.5 5 11a7.4 7.4 0 0 0 0 2L3.1 14.5l1.8 3.1 2.4-1a7 7 0 0 0 1.7 1l.4 2.6h5.2l.4-2.6a7 7 0 0 0 1.7-1l2.4 1 1.8-3.1-2-1.5c.1-.3.1-.6.1-1Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+        </svg>
       </button>
+
       <button type="button" class="icon-btn toc-toggle" id="tocToggle" aria-haspopup="true" aria-expanded="false" aria-label="فهرس الفصول">
-        <span aria-hidden="true">☰</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-svg">
+          <path d="M5 7h14M5 12h14M5 17h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
       </button>
     </div>
   </header>
@@ -71,9 +81,9 @@
         <div class="chapter-body" id="chapterBody"></div>
 
         <nav class="chapter-nav">
-          <button type="button" class="nav-btn nav-prev" id="prevBtn">→ الفصل السابق</button>
+          <button type="button" class="nav-btn nav-prev" id="prevBtn">الفصل السابق</button>
           <span class="chapter-progress-label" id="chapterProgressLabel"></span>
-          <button type="button" class="nav-btn nav-next" id="nextBtn">الفصل التالي ←</button>
+          <button type="button" class="nav-btn nav-next" id="nextBtn">الفصل التالي</button>
         </nav>
       </article>
     </main>
@@ -87,8 +97,12 @@
 
     <div class="popover-section">
       <p class="popover-label">نوع الخط</p>
-      <p class="popover-hint" id="langHint"></p>
-      <div class="option-row" id="fontOptions"></div>
+      <div class="option-row" id="fontOptions">
+        <button type="button" class="option-chip" data-font="amiri" style="font-family:'Amiri',serif">أميري</button>
+        <button type="button" class="option-chip" data-font="notoNaskh" style="font-family:'Noto Naskh Arabic',serif">نص عربي</button>
+        <button type="button" class="option-chip" data-font="cairo" style="font-family:'Cairo',sans-serif">قاهرة</button>
+        <button type="button" class="option-chip" data-font="tajawal" style="font-family:'Tajawal',sans-serif">تجوال</button>
+      </div>
     </div>
 
     <div class="popover-section">
@@ -103,9 +117,9 @@
     <div class="popover-section">
       <p class="popover-label">لون الخلفية</p>
       <div class="theme-row" id="themeOptions">
-        <button type="button" class="theme-swatch theme-dark" data-theme="dark" aria-label="داكن"></button>
-        <button type="button" class="theme-swatch theme-violet" data-theme="violet" aria-label="بنفسجي فاتح"></button>
         <button type="button" class="theme-swatch theme-light" data-theme="light" aria-label="أبيض"></button>
+        <button type="button" class="theme-swatch theme-dark" data-theme="dark" aria-label="داكن"></button>
+        <button type="button" class="theme-swatch theme-sepia" data-theme="sepia" aria-label="ورقي"></button>
       </div>
     </div>
   </div>
