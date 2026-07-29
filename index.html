@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="sepia">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>for lunch time — قراءة روايات</title>
+<meta name="description" content="موقع لقراءة الروايات على شكل فصول قصيرة، بطعم استراحة الغداء." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="progress-track" id="progressTrack" aria-hidden="true">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark">for lunch time</span>
+      <span class="brand-tagline">قراءة قصيرة، بطعم استراحة الغداء</span>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="icon-btn" id="bookmarksBtn" aria-haspopup="dialog" aria-expanded="false" aria-label="الإشارات المرجعية">
+        <span aria-hidden="true">🔖</span>
+        <span class="badge" id="bookmarksBadge" hidden>0</span>
+      </button>
+      <button type="button" class="icon-btn" id="settingsBtn" aria-haspopup="dialog" aria-expanded="false" aria-label="إعدادات القراءة">
+        <span aria-hidden="true">⚙</span>
+      </button>
+      <button type="button" class="icon-btn toc-toggle" id="tocToggle" aria-haspopup="true" aria-expanded="false" aria-label="فهرس الفصول">
+        <span aria-hidden="true">☰</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <div class="scrim" id="scrim" hidden></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="novel-card">
+        <div class="novel-cover" id="novelCover" aria-hidden="true"></div>
+        <div class="novel-meta">
+          <h1 class="novel-title" id="novelTitle"></h1>
+          <p class="novel-author" id="novelAuthor"></p>
+          <span class="status-badge" id="novelStatus"></span>
+        </div>
+      </div>
+
+      <p class="novel-synopsis" id="novelSynopsis"></p>
+
+      <nav class="toc" aria-label="فهرس الفصول">
+        <h2 class="toc-heading">الفهرس</h2>
+        <ul class="toc-list" id="tocList"></ul>
+      </nav>
+    </aside>
+
+    <main class="reader" id="reader">
+      <article class="chapter" id="chapterArticle">
+        <header class="chapter-head">
+          <p class="chapter-eyebrow" id="chapterEyebrow"></p>
+          <h2 class="chapter-title" id="chapterTitle"></h2>
+          <div class="chapter-meta">
+            <span class="reading-time" id="readingTime"></span>
+          </div>
+        </header>
+
+        <div class="chapter-body" id="chapterBody"></div>
+
+        <nav class="chapter-nav">
+          <button type="button" class="nav-btn nav-prev" id="prevBtn">→ الفصل السابق</button>
+          <span class="chapter-progress-label" id="chapterProgressLabel"></span>
+          <button type="button" class="nav-btn nav-next" id="nextBtn">الفصل التالي ←</button>
+        </nav>
+      </article>
+    </main>
+  </div>
+
+  <div class="popover" id="settingsPopover" role="dialog" aria-label="إعدادات القراءة" hidden>
+    <div class="popover-top">
+      <h3 class="popover-title">إعدادات القراءة</h3>
+      <button type="button" class="popover-close" id="settingsClose" aria-label="إغلاق">×</button>
+    </div>
+
+    <div class="popover-section">
+      <p class="popover-label">نوع الخط</p>
+      <div class="option-row" id="fontOptions">
+        <button type="button" class="option-chip" data-font="amiri" style="font-family:'Amiri',serif">أميري</button>
+        <button type="button" class="option-chip" data-font="notoNaskh" style="font-family:'Noto Naskh Arabic',serif">نسخ نوتو</button>
+        <button type="button" class="option-chip" data-font="cairo" style="font-family:'Cairo',sans-serif">القاهرة</button>
+        <button type="button" class="option-chip" data-font="tajawal" style="font-family:'Tajawal',sans-serif">تجوّل</button>
+      </div>
+    </div>
+
+    <div class="popover-section">
+      <p class="popover-label">حجم الخط</p>
+      <div class="stepper">
+        <button type="button" class="stepper-btn" id="fontDec" aria-label="تصغير الخط">−</button>
+        <span class="stepper-value" id="fontSizeLabel">19</span>
+        <button type="button" class="stepper-btn" id="fontInc" aria-label="تكبير الخط">+</button>
+      </div>
+    </div>
+
+    <div class="popover-section">
+      <p class="popover-label">لون الخلفية</p>
+      <div class="theme-row" id="themeOptions">
+        <button type="button" class="theme-swatch theme-light" data-theme="light" aria-label="أبيض"></button>
+        <button type="button" class="theme-swatch theme-dark" data-theme="dark" aria-label="داكن"></button>
+        <button type="button" class="theme-swatch theme-sepia" data-theme="sepia" aria-label="ورقي قديم"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="popover" id="bookmarksPopover" role="dialog" aria-label="الإشارات المرجعية" hidden>
+    <div class="popover-top">
+      <h3 class="popover-title">الإشارات المرجعية</h3>
+      <button type="button" class="popover-close" id="bookmarksClose" aria-label="إغلاق">×</button>
+    </div>
+    <ul class="bookmarks-list" id="bookmarksList"></ul>
+    <p class="popover-note">تُحفظ إشاراتك المرجعية طوال هذه الجلسة فقط.</p>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="novel-data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
