@@ -1,481 +1,376 @@
-/* ============================================================
-   for lunch time — e-reader
-   ترتيب الملف: 1) HTML  2) CSS  3) JS (المحرك العام)  4) JS (بيانات الرواية)
+/* =========================================================================
+   ساعة قبل الفجر — Stylesheet
+   Psychological-minimalist, editorial, obsidian-glass reading experience.
+   ========================================================================= */
 
-   الهوية البصرية: "مخطوطة مضيئة" (Illuminated Manuscript)
-   حبر داكن دافئ + ورق قديم + ذهب معتّق — بدل الرمادي التقني والسماوي البارد.
-   كل الأصناف (classes) والمعرّفات وقيم data-theme / data-font / dir
-   بقيت كما هي تمامًا كي يستمر عمل الجافاسكربت والـHTML الحاليين دون أي تعديل.
-   ============================================================ */
+/* ---------- Design tokens ---------- */
+:root {
+  /* Palette — monochrome obsidian / silver, no cyberpunk, no sepia */
+  --c-void: #condition0a0a0c;         /* fallback, overridden below */
+  --c-void: #050506;
+  --c-frame: 10, 10, 12;              /* rgb triplet for rgba() use */
+  --c-border: rgba(210, 210, 216, 0.10);
+  --c-border-strong: rgba(210, 210, 216, 0.20);
+  --c-text: #E4E4E7;
+  --c-text-dim: #8B8B93;
+  --c-text-faint: #5C5C64;
+  --c-accent: #D4D4DC;                /* soft platinum — used sparingly */
+  --c-accent-soft: rgba(212, 212, 220, 0.35);
 
-/* ---------- 0. الخطوط ---------- */
-@import url('https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Tajawal:wght@300;400;500;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Noto+Sans:wght@400;500;600;700&display=swap');
+  /* Spacing / shape */
+  --radius: 3px;
+  --frame-blur: 22px;
+  --edge: 1px;
 
-/* ---------- 1. الجذور / التوكِنز (Design Tokens) ---------- */
-:root{
-  /* لوحة الألوان: حبر دافئ + ورق قديم + ذهب معتّق */
-  --bg-void:#15120E;
-  --bg-surface:#1D1710;
-  --bg-surface-2:#261E14;
-  --bg-surface-3:#302619;
-  --glass:rgba(233,214,175,.05);
-  --glass-strong:rgba(233,214,175,.09);
-  --border-glass:rgba(212,175,106,.16);
-  --border-glass-soft:rgba(233,214,175,.08);
-
-  --sky:#D2A65C;              /* الذهب المعتّق — لون الهوية الأساسي */
-  --sky-dim:#9C7A3E;
-  --sky-ink:#241B0C;          /* لون النص فوق خلفية ذهبية */
-  --sky-glow:rgba(210,166,92,.35);
-  --sky-glow-soft:rgba(210,166,92,.14);
-
-  --ink-1:#EDE1C8;
-  --ink-2:#A99A7D;
-  --ink-3:#6B5F49;
-
-  --danger:#C1543F;
-  --ok:#5E9E72;
-
-  --sp-1:.25rem; --sp-2:.5rem; --sp-3:.75rem; --sp-4:1rem;
-  --sp-5:1.5rem; --sp-6:2rem; --sp-7:3rem; --sp-8:4rem;
-
-  --radius-sm:6px; --radius-md:11px; --radius-lg:18px; --radius-xl:26px; --radius-round:999px;
-
-  --shadow-soft:0 10px 34px rgba(0,0,0,.4);
-  --shadow-lift:0 18px 54px rgba(0,0,0,.5);
-  --shadow-glow:0 0 40px var(--sky-glow);
-  --shadow-emboss:inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.35);
-
-  --ease:cubic-bezier(.22,.61,.36,1);
-  --dur-1:150ms; --dur-2:280ms; --dur-3:480ms;
-
-  --font-display:'Cairo','Segoe UI',sans-serif;
-  --font-naskh:'Noto Naskh Arabic','Traditional Arabic',serif;
-  --font-cairo:'Cairo',sans-serif;
-  --font-tajawal:'Tajawal',sans-serif;
-  --font-latin:'Newsreader','Noto Serif JP','Noto Serif SC','Noto Serif KR',Georgia,serif;
-  --font-reading:var(--font-naskh);
-
-  /* خط العناوين الثابت — هوية الغلاف، لا يتغيّر مع اختيار القارئ لخط النص */
-  --font-title-ar:'Aref Ruqaa','Traditional Arabic',serif;
-  --font-title-latin:'Newsreader',Georgia,serif;
-  --font-title:var(--font-title-ar);
-
-  --bg-app:var(--bg-void);
-  --bg-card:var(--bg-surface);
-  --text-main:var(--ink-1);
-  --text-muted:var(--ink-2);
-  --accent:var(--sky);
-  --content-glow:radial-gradient(ellipse 60% 40% at 50% 0%, var(--sky-glow-soft), transparent 70%);
-  --sidebar-w:300px;
-
-  /* نسيج ورقي خفيف جدًا لصفحة القراءة فقط */
-  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  /* Reading type scale (mutable via JS font-size controls) */
+  --reading-size: 1.125rem;
+  --reading-leading: 2.05;
 }
 
-/* سِمات القراءة الثلاث — مطبّقة على كامل الصفحة */
-html[data-theme="night"]{
-  --bg-app:var(--bg-void); --bg-card:var(--bg-surface);
-  --text-main:#EDE1C8; --text-muted:#A99A7D;
-  --sky:#D2A65C; --sky-dim:#9C7A3E; --sky-ink:#241B0C;
-  --sky-glow:rgba(210,166,92,.35); --sky-glow-soft:rgba(210,166,92,.14);
-  --content-glow:radial-gradient(ellipse 60% 40% at 50% 0%, var(--sky-glow-soft), transparent 70%);
+/* ---------- Reset ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  color: var(--c-text);
+  background: var(--c-void);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
-html[data-theme="day"]{
-  --bg-app:#F1E7D0; --bg-card:#FAF3E3;
-  --text-main:#2C2013; --text-muted:#6E5F49;
-  --sky:#8A5A22; --sky-dim:#6B431A; --sky-ink:#FFF7EA;
-  --sky-glow:rgba(138,90,34,.20); --sky-glow-soft:rgba(138,90,34,.09);
-  --border-glass:rgba(44,32,19,.14); --border-glass-soft:rgba(44,32,19,.08);
-  --glass:rgba(44,32,19,.035); --glass-strong:rgba(44,32,19,.07);
-  --content-glow:none;
+ul { list-style: none; margin: 0; padding: 0; }
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
-html[data-theme="dusk"]{
-  --bg-app:#1F1A2C; --bg-card:#282237;
-  --text-main:#E9DFE6; --text-muted:#9C8FA6;
-  --sky:#DDA05F; --sky-dim:#B57B44; --sky-ink:#241706;
-  --sky-glow:rgba(221,160,95,.30); --sky-glow-soft:rgba(221,160,95,.13);
-  --content-glow:radial-gradient(ellipse 70% 50% at 50% 0%, var(--sky-glow-soft), transparent 75%);
+h1, h2, h3, p, dl, dd { margin: 0; }
+svg { display: block; }
+
+/* ---------- Language-driven typography ---------- */
+/* Arabic */
+:root[lang="ar"] body { font-family: "Noto Sans Arabic", "Inter", sans-serif; }
+:root[lang="ar"] .serif { font-family: "Noto Serif Arabic", serif; }
+/* English */
+:root[lang="en"] body { font-family: "Inter", sans-serif; }
+:root[lang="en"] .serif { font-family: "Cormorant Garamond", serif; }
+/* Japanese */
+:root[lang="ja"] body { font-family: "Noto Sans JP", sans-serif; }
+:root[lang="ja"] .serif { font-family: "Noto Serif JP", serif; }
+
+.serif { font-weight: 500; letter-spacing: 0.01em; }
+
+/* ---------- Atmosphere (full-bleed background) ---------- */
+/*
+  The brief calls for a full-resolution artistic photograph here.
+  Until the user supplies one, a slow, artistic gradient stands in —
+  replace the `background` declaration below with:
+    background: url("your-artwork.jpg") center / cover fixed no-repeat;
+  Everything else (the ghost frames above it) works unchanged.
+*/
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(120% 90% at 50% 8%, rgba(60, 58, 72, 0.35), transparent 55%),
+    radial-gradient(140% 100% at 85% 100%, rgba(30, 28, 36, 0.5), transparent 60%),
+    linear-gradient(180deg, #0b0b0e 0%, #050506 55%, #030304 100%);
+  background-attachment: fixed;
+  background-size: cover;
+  animation: atmosphere-breathe 22s ease-in-out infinite;
+}
+.atmosphere__vignette {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
+}
+@keyframes atmosphere-breathe {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .atmosphere { animation: none; }
 }
 
-/* الخطوط الثلاثة القابلة للتبديل (خط القراءة فقط) */
-html[data-font="naskh"]{ --font-reading:var(--font-naskh); }
-html[data-font="cairo"]{ --font-reading:var(--font-cairo); }
-html[data-font="tajawal"]{ --font-reading:var(--font-tajawal); }
-
-/* عند تبديل اللغة إلى لغة غير عربية: خط القراءة وخط العناوين معًا */
-html[dir="ltr"]{ --font-reading:var(--font-latin); --font-title:var(--font-title-latin); }
-html[dir="ltr"] #prevIcon, html[dir="ltr"] #nextIcon{ transform:scaleX(-1); }
-
-/* ---------- 2. Reset أساسي ---------- */
-*,*::before,*::after{ box-sizing:border-box; }
-html{ scroll-behavior:smooth; }
-@media (prefers-reduced-motion:reduce){
-  html{ scroll-behavior:auto; }
-  *,*::before,*::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
-}
-body{
-  margin:0; min-height:100vh;
-  background:var(--bg-app); color:var(--text-main);
-  font-family:var(--font-display);
-  transition:background var(--dur-3) var(--ease), color var(--dur-3) var(--ease);
-  overflow-x:hidden;
-}
-img{ max-width:100%; display:block; }
-button{ font-family:inherit; }
-h1,h2,h3,p{ margin:0; }
-ul{ margin:0; padding:0; list-style:none; }
-a{ color:inherit; }
-
-/* رابط تخطّي للوصول */
-.skip-link{
-  position:fixed; inset-inline-start:var(--sp-4); top:-60px; z-index:400;
-  background:var(--sky); color:var(--sky-ink); padding:var(--sp-3) var(--sp-4);
-  border-radius:var(--radius-sm); font-weight:700; transition:top var(--dur-2) var(--ease);
-}
-.skip-link:focus{ top:var(--sp-4); }
-
-:focus-visible{ outline:2px solid var(--sky); outline-offset:3px; border-radius:4px; }
-
-/* ---------- 3. شريط تقدّم القراءة (شريط الإشارة المرجعية) ---------- */
-.progress-beam{
-  position:fixed; inset-inline-start:0; top:0; height:3px; width:0%;
-  z-index:500; pointer-events:none;
-  background:linear-gradient(90deg, transparent, var(--sky-dim), var(--sky));
-  box-shadow:0 0 12px 1px var(--sky-glow);
-  transition:width 80ms linear;
-}
-/* نقطة حبر متوهّجة عند طرف الشريط — تتبع نسبة التقدّم تلقائيًا */
-.progress-beam::after{
-  content:""; position:absolute; top:50%; inset-inline-end:0;
-  width:7px; height:7px; border-radius:50%; transform:translate(50%,-50%);
-  background:var(--sky); box-shadow:0 0 10px 2px var(--sky-glow);
+/* ---------- Ghost frames (obsidian glassmorphism) ---------- */
+.frame {
+  background: rgba(var(--c-frame), 0.55);
+  border: var(--edge) solid var(--c-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(var(--frame-blur)) saturate(115%);
+  -webkit-backdrop-filter: blur(var(--frame-blur)) saturate(115%);
 }
 
-/* ---------- 4. الشريط العلوي ---------- */
-.topbar{
-  position:sticky; top:0; z-index:120;
-  display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3);
-  padding:var(--sp-3) var(--sp-5);
-  background:color-mix(in srgb, var(--bg-app) 78%, transparent);
-  backdrop-filter:blur(18px) saturate(140%);
-  -webkit-backdrop-filter:blur(18px) saturate(140%);
-  border-bottom:1px solid var(--border-glass-soft);
+/* ---------- Header ---------- */
+.frame--header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 1.25rem clamp(1rem, 4vw, 3rem) 0;
+  padding: 0.9rem 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
 }
-.topbar-start,.topbar-end{ display:flex; align-items:center; gap:var(--sp-2); }
-.icon-btn{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:40px; height:40px; border-radius:var(--radius-round);
-  background:var(--glass); border:1px solid var(--border-glass); color:var(--text-main);
-  cursor:pointer; position:relative; transition:background var(--dur-2) var(--ease), transform var(--dur-1) var(--ease), box-shadow var(--dur-2) var(--ease);
-}
-.icon-btn:hover{ background:var(--glass-strong); box-shadow:0 0 0 4px var(--sky-glow-soft); }
-.icon-btn:active{ transform:scale(.92); }
-.icon-btn svg{ width:19px; height:19px; }
-.badge-count{
-  position:absolute; top:-4px; inset-inline-end:-4px; min-width:16px; height:16px; padding:0 3px;
-  background:var(--sky); color:var(--sky-ink); border-radius:var(--radius-round);
-  font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center;
-  opacity:0; transform:scale(.5); transition:all var(--dur-2) var(--ease);
-}
-.badge-count.show{ opacity:1; transform:scale(1); }
+.brand { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; }
+.brand__glyph { width: 22px; height: 22px; color: var(--c-accent); flex-shrink: 0; }
+.brand__text { display: flex; flex-direction: column; line-height: 1.2; }
+.brand__title { font-size: 1.05rem; }
+.brand__tagline { font-size: 0.7rem; color: var(--c-text-faint); letter-spacing: 0.08em; text-transform: uppercase; }
 
-.reading-time-pill{
-  display:flex; align-items:center; gap:var(--sp-2);
-  padding:var(--sp-2) var(--sp-4); border-radius:var(--radius-round);
-  background:var(--glass); border:1px solid var(--border-glass);
-  font-size:.82rem; color:var(--text-muted); white-space:nowrap;
+.nav {
+  display: flex;
+  gap: 0.4rem;
+  margin-inline-start: auto;
+  flex-wrap: wrap;
 }
-.reading-time-pill svg{ width:15px; height:15px; color:var(--sky); flex-shrink:0; }
+.nav__link {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--c-text-dim);
+  border-radius: var(--radius);
+  transition: color 0.25s ease, background-color 0.25s ease;
+}
+.nav__link:hover { color: var(--c-text); }
+.nav__link.is-active { color: var(--c-text); background: rgba(255, 255, 255, 0.05); }
 
-.control-group{ position:relative; }
-.control-trigger{
-  display:flex; align-items:center; gap:var(--sp-2);
-  padding:var(--sp-2) var(--sp-3); border-radius:var(--radius-round);
-  background:var(--glass); border:1px solid var(--border-glass); color:var(--text-main);
-  cursor:pointer; font-size:.82rem; transition:background var(--dur-2) var(--ease);
+.lang-switch { display: flex; gap: 0.25rem; border-inline-start: var(--edge) solid var(--c-border); padding-inline-start: 1rem; }
+.lang-switch__btn {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  padding: 0.35rem 0.6rem;
+  color: var(--c-text-faint);
+  border-radius: var(--radius);
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
-.control-trigger:hover{ background:var(--glass-strong); }
-.control-trigger svg{ width:16px; height:16px; }
-.control-panel{
-  position:absolute; top:calc(100% + 10px); inset-inline-end:0; min-width:190px;
-  background:var(--bg-card); border:1px solid var(--border-glass); border-radius:var(--radius-md);
-  box-shadow:var(--shadow-lift); padding:var(--sp-2); opacity:0; visibility:hidden; transform:translateY(-6px);
-  transition:all var(--dur-2) var(--ease); z-index:200; backdrop-filter:blur(20px);
-}
-.control-group.open .control-panel{ opacity:1; visibility:visible; transform:translateY(0); }
-.control-option{
-  display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2);
-  padding:var(--sp-3); border-radius:var(--radius-sm); cursor:pointer; font-size:.85rem;
-  transition:background var(--dur-1) var(--ease);
-}
-.control-option:hover{ background:var(--glass-strong); }
-.control-option.active{ color:var(--sky); }
-.control-option .dot{ width:8px; height:8px; border-radius:50%; background:currentColor; opacity:0; }
-.control-option.active .dot{ opacity:1; box-shadow:0 0 8px var(--sky-glow); }
+.lang-switch__btn:hover { color: var(--c-text-dim); }
+.lang-switch__btn.is-active { color: var(--c-void); background: var(--c-accent); }
 
-/* ---------- 5. الشريط الجانبي (فهرس المحتويات) ---------- */
-.sidebar-overlay{
-  position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:150; opacity:0; visibility:hidden;
-  transition:opacity var(--dur-2) var(--ease); backdrop-filter:blur(2px);
+/* ---------- Layout / views ---------- */
+#app {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem) 6rem;
 }
-.sidebar-overlay.show{ opacity:1; visibility:visible; }
-.sidebar{
-  position:fixed; inset-inline-start:0; top:0; bottom:0; width:var(--sidebar-w); z-index:160;
-  background:color-mix(in srgb, var(--bg-surface) 92%, transparent);
-  backdrop-filter:blur(22px); border-inline-end:1px solid var(--border-glass-soft);
-  display:flex; flex-direction:column; transform:translateX(calc(-1 * var(--sidebar-w)));
-  transition:transform var(--dur-3) var(--ease);
+.view { display: none; animation: view-rise 0.5s ease both; }
+.view.is-active { display: block; }
+@keyframes view-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-html[dir="rtl"] .sidebar{ transform:translateX(var(--sidebar-w)); }
-.sidebar.open{ transform:translateX(0); }
-.sidebar-head{
-  display:flex; align-items:center; justify-content:space-between; padding:var(--sp-5) var(--sp-5) var(--sp-4);
-  border-bottom:1px solid var(--border-glass-soft);
-}
-.sidebar-title{ font-weight:700; font-size:1rem; }
-.arc-list,.chapter-list{ flex:1; overflow-y:auto; padding:var(--sp-3); display:flex; flex-direction:column; gap:var(--sp-1); }
-.chapter-link{
-  display:flex; align-items:center; gap:var(--sp-3); width:100%; padding:var(--sp-3) var(--sp-4);
-  border-radius:var(--radius-md); border-inline-start:2px solid transparent;
-  background:transparent; border-top:0; border-bottom:0; border-inline-end:0; cursor:pointer;
-  color:var(--text-muted); font-size:.85rem; text-align:start; transition:all var(--dur-2) var(--ease);
-}
-.chapter-link:hover{ color:var(--text-main); background:var(--glass); }
-.chapter-link.active{
-  color:var(--sky); border-inline-start-color:var(--sky); background:var(--sky-glow-soft);
-  font-weight:600;
-}
-.chapter-link .num{
-  font-family:var(--font-title); font-size:.9rem; color:var(--sky-dim);
-  min-width:22px; flex-shrink:0;
+@media (prefers-reduced-motion: reduce) {
+  .view { animation: none; }
 }
 
-/* ---------- 6. البطل (Hero) ---------- */
-.hero{
-  max-width:1100px; margin:var(--sp-7) auto var(--sp-6); padding:0 var(--sp-5);
-  display:grid; grid-template-columns:220px 1fr; gap:var(--sp-7); align-items:center;
+/* ---------- Hero (home) ---------- */
+.frame--hero {
+  padding: clamp(2.5rem, 6vw, 5rem) clamp(1.5rem, 6vw, 4rem);
+  text-align: center;
 }
-.hero-cover-wrap{ display:flex; justify-content:center; }
-.portal-ring{
-  position:relative; width:190px; height:190px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  background:radial-gradient(circle at 50% 40%, var(--sky-glow-soft), transparent 70%);
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--c-text-faint);
+  margin-bottom: 1rem;
 }
-/* حلقة "أسطرلاب" مصنوعة من علامات دقيقة — إطار المخطوطة المضيئة */
-.portal-ring::before{
-  content:""; position:absolute; inset:-14px; border-radius:50%;
-  background:repeating-conic-gradient(from 0deg, var(--sky-dim) 0deg 1.6deg, transparent 1.6deg 9deg);
-  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
-          mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
-  opacity:.8;
+.hero__title {
+  font-size: clamp(2.1rem, 6vw, 3.4rem);
+  line-height: 1.25;
+  margin-bottom: 1.75rem;
 }
-.portal-ring::after{
-  content:""; position:absolute; inset:-4px; border-radius:50%;
-  border:1px solid var(--sky-dim); opacity:.5;
-  box-shadow:0 0 40px 4px var(--sky-glow-soft);
-  animation:portal-breathe 6s var(--ease) infinite;
+.hero__meta {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
 }
-@keyframes portal-breathe{ 0%,100%{ opacity:.4; } 50%{ opacity:.85; } }
-.cover-frame{
-  width:100%; height:100%; border-radius:50%; overflow:hidden;
-  background:var(--bg-surface-2); border:1px solid var(--border-glass);
-  display:flex; align-items:center; justify-content:center; color:var(--text-muted);
-  transition:transform var(--dur-3) var(--ease);
+.meta-pill {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  font-size: 0.8rem;
+  padding: 0.45rem 0.9rem;
+  border: var(--edge) solid var(--c-border);
+  border-radius: 999px;
+  color: var(--c-text-dim);
 }
-.cover-frame:hover{ transform:scale(1.045); }
-.cover-frame img{ width:100%; height:100%; object-fit:cover; }
-.cover-frame svg{ width:44px; height:44px; opacity:.5; }
+.meta-pill__label { color: var(--c-text-faint); font-size: 0.7rem; }
+.meta-pill--status .meta-pill__value { color: var(--c-accent); }
 
-.author-row{ display:flex; align-items:center; gap:var(--sp-2); margin-top:var(--sp-2); }
-.novel-author{ color:var(--text-muted); font-size:.95rem; }
-.verified-badge{ display:inline-flex; color:var(--sky); }
-.verified-badge svg{ width:16px; height:16px; }
-
-.badges-row{ display:flex; gap:var(--sp-2); margin-bottom:var(--sp-3); flex-wrap:wrap; }
-.badge{
-  display:inline-flex; align-items:center; gap:var(--sp-2); padding:var(--sp-1) var(--sp-3);
-  border-radius:var(--radius-round); font-size:.72rem; font-weight:700; letter-spacing:.02em;
-  background:var(--glass); border:1px solid var(--border-glass); color:var(--text-muted);
-}
-.badge-status{ position:relative; padding-inline-start:var(--sp-4); }
-.badge-status .dot{
-  position:absolute; inset-inline-start:10px; top:50%; transform:translateY(-50%);
-  width:6px; height:6px; border-radius:50%; background:var(--ink-3);
-}
-.badge-status.ongoing{ color:var(--sky); border-color:var(--sky-glow); }
-.badge-status.ongoing .dot{ background:var(--sky); box-shadow:0 0 6px var(--sky-glow); animation:pulse-dot 2.4s ease-in-out infinite; }
-.badge-status.finished{ color:var(--ink-2); }
-.badge-status.finished .dot{ background:var(--ink-2); }
-@keyframes pulse-dot{ 0%,100%{ opacity:1; transform:translateY(-50%) scale(1); } 50%{ opacity:.4; transform:translateY(-50%) scale(1.4); } }
-
-.novel-title{
-  font-family:var(--font-title); font-size:clamp(1.6rem,3.2vw,2.4rem); font-weight:700;
-  line-height:1.3; letter-spacing:0;
-}
-.novel-synopsis{ font-family:var(--font-reading); color:var(--text-muted); font-size:.94rem; line-height:1.75; margin-top:var(--sp-3); max-width:56ch; }
-
-.stats-bar{ display:flex; flex-wrap:wrap; gap:var(--sp-6); margin-top:var(--sp-5); }
-.stat-item{ display:flex; align-items:center; gap:var(--sp-2); }
-.stat-item svg{ width:17px; height:17px; color:var(--sky); flex-shrink:0; }
-.stat-value{ font-weight:700; font-size:.95rem; }
-.stat-label{ font-size:.72rem; color:var(--text-muted); display:block; }
-.stat-text{ display:flex; flex-direction:column; line-height:1.3; }
-
-/* ---------- 7. صفحة القراءة ---------- */
-.reader-page{
-  max-width:800px; margin:0 auto var(--sp-8); padding:var(--sp-7) var(--sp-6);
-  background-color:var(--bg-card);
-  background-image:var(--content-glow), var(--grain);
-  background-size:auto, 140px 140px;
-  background-blend-mode:normal, overlay;
-  border:1px solid var(--border-glass-soft); border-radius:var(--radius-xl);
-  box-shadow:var(--shadow-soft), var(--shadow-emboss); position:relative;
-}
-.chapter-eyebrow{
-  display:flex; align-items:center; justify-content:center; gap:var(--sp-3);
-  font-size:.76rem; color:var(--sky); letter-spacing:.14em; font-weight:700; text-transform:uppercase;
-  margin-bottom:var(--sp-4);
-}
-.chapter-eyebrow::before,.chapter-eyebrow::after{
-  content:""; flex:1; max-width:52px; height:1px;
-  background:linear-gradient(90deg, transparent, var(--sky-glow), transparent);
-}
-.chapter-title{
-  font-family:var(--font-title); font-size:clamp(1.5rem,2.8vw,2.05rem); font-weight:700;
-  line-height:1.45; letter-spacing:.005em; text-align:center; margin-bottom:var(--sp-6);
-}
-.chapter-body{ font-family:var(--font-reading); font-size:1.125rem; line-height:1.85; color:var(--text-main); }
-.chapter-body h2{
-  font-family:var(--font-title); font-size:1.2rem; font-weight:700; margin:var(--sp-6) 0 var(--sp-3); color:var(--sky);
-}
-.p-wrap{ position:relative; margin-bottom:var(--sp-5); padding-inline-start:var(--sp-6); }
-.p-wrap p{ margin:0; }
-/* حرف استهلالي مُذهَّب — أول فقرة من كل فصل، بروح المخطوطات المزخرفة */
-.chapter-body > .p-wrap:first-of-type p::first-letter{
-  font-family:var(--font-title); font-weight:700; color:var(--sky);
-  font-size:3.2em; line-height:.72; float:left;
-  padding-inline-end:.09em; padding-top:.06em;
-}
-html[dir="rtl"] .chapter-body > .p-wrap:first-of-type p::first-letter{ float:right; }
-.p-bookmark{
-  position:absolute; inset-inline-start:0; top:.2em;
-  width:26px; height:26px; display:flex; align-items:center; justify-content:center;
-  border-radius:50%; background:transparent; border:none; color:var(--text-muted);
-  cursor:pointer; opacity:0; transition:all var(--dur-2) var(--ease);
-}
-.p-wrap:hover .p-bookmark, .p-bookmark:focus-visible{ opacity:1; }
-.p-bookmark:hover{ color:var(--sky); background:var(--sky-glow-soft); }
-.p-bookmark svg{ width:15px; height:15px; }
-.p-bookmark.saved{ opacity:1; color:var(--sky); }
-.p-bookmark.saved svg{ fill:var(--sky); }
-.p-wrap.flash{ animation:flash-highlight 1.6s var(--ease); }
-@keyframes flash-highlight{ 0%{ background:var(--sky-glow-soft); border-radius:var(--radius-sm); } 100%{ background:transparent; } }
-
-.chapter-nav{
-  display:flex; align-items:stretch; gap:var(--sp-3); margin-top:var(--sp-7); padding-top:var(--sp-6);
-  border-top:1px solid var(--border-glass-soft);
-}
-.nav-btn{
-  position:relative; overflow:hidden;
-  flex:1; display:flex; align-items:center; justify-content:center; gap:var(--sp-2);
-  padding:var(--sp-4); border-radius:var(--radius-md); background:var(--glass); border:1px solid var(--border-glass);
-  color:var(--text-main); cursor:pointer; font-size:.88rem; font-weight:600; transition:all var(--dur-2) var(--ease);
-}
-.nav-btn svg{ width:16px; height:16px; }
-.nav-btn:hover:not(:disabled){ background:var(--glass-strong); border-color:var(--sky-glow); box-shadow:0 0 0 4px var(--sky-glow-soft); }
-.nav-btn:disabled{ opacity:.35; cursor:not-allowed; }
-/* طيّة صفحة خفيفة تظهر عند التحويم — إشارة إلى تقليب الصفحات */
-.nav-btn::after{
-  content:""; position:absolute; top:0; inset-inline-end:0;
-  width:0; height:0; border-style:solid; border-width:0 0 15px 15px;
-  border-color:transparent transparent var(--sky-glow-soft) transparent;
-  opacity:0; transition:opacity var(--dur-2) var(--ease);
-}
-.nav-btn:hover:not(:disabled)::after{ opacity:1; }
-.nav-btn-toc{ flex:.6; }
-
-/* زر الحفظ العائم عند تحديد النص */
-.selection-bookmark-btn{
-  position:fixed; z-index:250; display:flex; align-items:center; gap:var(--sp-2);
-  padding:var(--sp-2) var(--sp-4); border-radius:var(--radius-round);
-  background:var(--sky); color:var(--sky-ink); font-size:.82rem; font-weight:700;
-  box-shadow:var(--shadow-lift); cursor:pointer; opacity:0; visibility:hidden; transform:translateY(6px) scale(.94);
-  transition:all var(--dur-2) var(--ease);
-}
-.selection-bookmark-btn.show{ opacity:1; visibility:visible; transform:translateY(0) scale(1); }
-.selection-bookmark-btn svg{ width:15px; height:15px; }
-
-/* ---------- 8. درج الإشارات المرجعية ---------- */
-.drawer-overlay{
-  position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:180; opacity:0; visibility:hidden;
-  transition:opacity var(--dur-2) var(--ease);
-}
-.drawer-overlay.show{ opacity:1; visibility:visible; }
-.bookmarks-drawer{
-  position:fixed; inset-inline-end:0; top:0; bottom:0; width:min(380px,88vw); z-index:190;
-  background:color-mix(in srgb, var(--bg-surface) 94%, transparent); backdrop-filter:blur(22px);
-  border-inline-start:1px solid var(--border-glass-soft); display:flex; flex-direction:column;
-  transform:translateX(105%);
-  transition:transform var(--dur-3) var(--ease);
-}
-html[dir="rtl"] .bookmarks-drawer{ transform:translateX(-105%); }
-.bookmarks-drawer.open{ transform:translateX(0); }
-.bookmarks-list{ flex:1; overflow-y:auto; padding:var(--sp-4); display:flex; flex-direction:column; gap:var(--sp-3); }
-.bookmark-card{
-  padding:var(--sp-4); border-radius:var(--radius-md); background:var(--glass); border:1px solid var(--border-glass-soft);
-  box-shadow:var(--shadow-emboss);
-  cursor:pointer; transition:all var(--dur-2) var(--ease);
-}
-.bookmark-card:hover{ background:var(--glass-strong); border-color:var(--sky-glow); }
-.bookmark-card .bm-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:var(--sp-2); }
-.bookmark-card .bm-chapter{ font-size:.72rem; color:var(--sky); font-weight:700; margin-bottom:var(--sp-1); }
-.bookmark-card .bm-excerpt{ font-size:.86rem; line-height:1.6; color:var(--text-main); font-family:var(--font-reading); }
-.bookmark-card .bm-date{ font-size:.68rem; color:var(--text-muted); margin-top:var(--sp-2); }
-.bm-delete{ flex-shrink:0; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--text-muted); background:transparent; border:none; cursor:pointer; }
-.bm-delete:hover{ color:var(--danger); background:rgba(232,115,79,.12); }
-.bm-delete svg{ width:13px; height:13px; }
-.empty-state{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--sp-3); padding:var(--sp-8) var(--sp-5); color:var(--text-muted); text-align:center; }
-.empty-state svg{ width:38px; height:38px; opacity:.4; }
-.empty-state p{ font-size:.85rem; }
-
-/* ---------- 9. الإشعارات (Toasts) ---------- */
-.toast-stack{
-  position:fixed; bottom:var(--sp-5); inset-inline-start:50%; transform:translateX(-50%);
-  z-index:600; display:flex; flex-direction:column; gap:var(--sp-2); align-items:center; width:min(420px,90vw);
-}
-html[dir="rtl"] .toast-stack{ transform:translateX(50%); }
-.toast{
-  display:flex; align-items:center; gap:var(--sp-3); padding:var(--sp-3) var(--sp-5);
-  background:color-mix(in srgb, var(--bg-surface) 92%, transparent); backdrop-filter:blur(16px);
-  border:1px solid var(--border-glass); border-radius:var(--radius-round); box-shadow:var(--shadow-lift);
-  font-size:.82rem; color:var(--text-main); opacity:0; transform:translateY(10px); transition:all var(--dur-2) var(--ease);
-  max-width:100%;
-}
-.toast.show{ opacity:1; transform:translateY(0); }
-.toast svg{ width:15px; height:15px; color:var(--sky); flex-shrink:0; }
-.toast-action{ color:var(--sky); font-weight:700; cursor:pointer; white-space:nowrap; margin-inline-start:auto; background:none; border:none; font-size:.82rem; }
-
-/* ---------- 10. الاستجابة (Responsive) ---------- */
-@media (max-width:860px){
-  .hero{ grid-template-columns:1fr; text-align:center; gap:var(--sp-5); margin-top:var(--sp-5); }
-  .hero-cover-wrap{ order:0; }
-  .author-row{ justify-content:center; }
-  .badges-row{ justify-content:center; }
-  .stats-bar{ justify-content:center; gap:var(--sp-5); }
-  .reader-page{ margin:0 var(--sp-3) var(--sp-7); padding:var(--sp-5) var(--sp-4); border-radius:var(--radius-lg); }
-  .topbar{ padding:var(--sp-2) var(--sp-3); }
-  .reading-time-pill span{ display:none; }
-  .control-trigger span{ display:none; }
-}
-@media (max-width:520px){
-  .portal-ring{ width:150px; height:150px; }
-  .chapter-nav{ flex-wrap:wrap; }
-  .nav-btn-toc{ order:3; flex-basis:100%; }
-  .chapter-body > .p-wrap:first-of-type p::first-letter{ font-size:2.6em; }
+.hero__synopsis {
+  font-size: 1rem;
+  color: var(--c-text-dim);
+  max-width: 46ch;
+  margin: 0 auto 2.5rem;
+  line-height: 1.8;
 }
 
-/* طباعة نظيفة بدون واجهة تحكم */
-@media print{
-  .topbar,.sidebar,.progress-beam,.bookmarks-drawer,.toast-stack,.selection-bookmark-btn,.chapter-nav{ display:none !important; }
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.8rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  border-radius: var(--radius);
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+.btn--primary {
+  background: var(--c-text);
+  color: var(--c-void);
+}
+.btn--primary:hover { background: var(--c-accent); }
+.btn__arrow { transition: transform 0.25s ease; }
+.btn--primary:hover .btn__arrow { transform: translateX(3px); }
+:root[dir="rtl"] .btn__arrow { display: inline-block; transform: scaleX(-1); }
+:root[dir="rtl"] .btn--primary:hover .btn__arrow { transform: scaleX(-1) translateX(3px); }
+
+.btn--ghost {
+  border: var(--edge) solid var(--c-border);
+  color: var(--c-text-dim);
+}
+.btn--ghost:hover:not(:disabled) { color: var(--c-text); border-color: var(--c-border-strong); }
+.btn--ghost:disabled { opacity: 0.35; cursor: default; }
+
+/* ---------- Panels (chapters / about) ---------- */
+.frame--panel { padding: clamp(1.75rem, 5vw, 3rem); }
+.panel__title { font-size: 1.5rem; margin-bottom: 1.75rem; }
+
+.chapter-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.chapter-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+  border: var(--edge) solid var(--c-border);
+  border-radius: var(--radius);
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+.chapter-list__item:hover { border-color: var(--c-border-strong); background: rgba(255, 255, 255, 0.02); }
+.chapter-list__num { font-size: 0.75rem; color: var(--c-text-faint); letter-spacing: 0.08em; }
+.chapter-list__title { flex: 1; margin-inline: 1rem; font-size: 1rem; }
+.chapter-list__cta { font-size: 0.8rem; color: var(--c-accent); }
+
+.about__body { color: var(--c-text-dim); line-height: 1.9; max-width: 65ch; margin-bottom: 2rem; }
+.about__facts { display: flex; gap: 2rem; flex-wrap: wrap; }
+.about__fact dt { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-text-faint); margin-bottom: 0.3rem; }
+.about__fact dd { font-size: 0.95rem; }
+
+/* ---------- Reader ---------- */
+.frame--reader { padding: clamp(1.5rem, 5vw, 3rem); }
+
+.reader__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
+  border-bottom: var(--edge) solid var(--c-border);
+}
+.reader__back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--c-text-dim);
+}
+.reader__back:hover { color: var(--c-text); }
+
+.reader__progress { color: var(--c-accent); }
+.progress__track { stroke: rgba(255, 255, 255, 0.08); }
+.progress__ring {
+  stroke: var(--c-accent);
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  stroke-dasharray: 106.8;
+  stroke-dashoffset: 106.8;
+  transition: stroke-dashoffset 0.15s linear;
+}
+
+.reader__font-controls { display: flex; gap: 0.4rem; }
+.reader__font-controls button {
+  width: 30px;
+  height: 30px;
+  font-size: 0.75rem;
+  border: var(--edge) solid var(--c-border);
+  border-radius: var(--radius);
+  color: var(--c-text-dim);
+}
+.reader__font-controls button:hover { color: var(--c-text); border-color: var(--c-border-strong); }
+
+.reader__title { font-size: clamp(1.6rem, 4vw, 2.3rem); margin-bottom: 2rem; line-height: 1.4; }
+
+.reader__body {
+  font-size: var(--reading-size);
+  line-height: var(--reading-leading);
+  color: var(--c-text);
+  letter-spacing: 0.01em;
+}
+.reader__body p { margin-bottom: 1.6em; }
+.reader__body p:last-child { margin-bottom: 0; }
+
+.reader__nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 1.75rem;
+  border-top: var(--edge) solid var(--c-border);
+}
+
+/* ---------- Footer ---------- */
+.frame--footer {
+  margin: 2rem clamp(1rem, 4vw, 3rem) 1.5rem;
+  padding: 1.1rem 1.4rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--c-text-faint);
+}
+.footer__dot { margin-inline: 0.5rem; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: rgba(var(--c-frame), 0.9);
+  border: var(--edge) solid var(--c-border-strong);
+  border-radius: var(--radius);
+  padding: 0.75rem 1.3rem;
+  font-size: 0.8rem;
+  color: var(--c-text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 50;
+  backdrop-filter: blur(14px);
+}
+.toast.is-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---------- Focus states (never remove for accessibility) ---------- */
+:focus-visible {
+  outline: 1px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .frame--header { flex-direction: column; align-items: stretch; gap: 0.9rem; }
+  .nav { margin-inline-start: 0; justify-content: center; }
+  .lang-switch { justify-content: center; border-inline-start: none; padding-inline-start: 0; border-top: var(--edge) solid var(--c-border); padding-top: 0.75rem; }
+  .reader__toolbar { flex-wrap: wrap; }
+  .about__facts { gap: 1.25rem; }
 }
