@@ -1,520 +1,830 @@
-/**
- * script.js
- * منطق موقع "for lunch time" لقراءة الروايات.
- * المحتوى نفسه موجود في novel-data.js — هذا الملف لا يحتاج تعديلاً
- * إلا إذا أردت تغيير سلوك الموقع.
- */
-(function () {
-  "use strict";
+(function(){
+'use strict';
 
-  /* ------------------------------------------------------------
-     أدوات مساعدة
-     ------------------------------------------------------------ */
-  const EASTERN_DIGITS = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+/* ============================================================
+   3) JavaScript — المحرك العام للقارئ
+   يقرأ بيانات الرواية من كائن NOVEL المُعرَّف في ملف خارجي منفصل:
+   novel-data.js (يجب أن يبقى في نفس مجلد هذا الملف).
+   ============================================================ */
 
-  function toArabicDigits(value) {
-    return String(value).replace(/[0-9]/g, (d) => EASTERN_DIGITS[+d]);
+/* ---------- الإعدادات القابلة للتخصيص ---------- */
+const CONFIG = {
+  geoApiUrl:'https://ipapi.co/json/',
+  translateEndpoint:'https://translate.googleapis.com/translate_a/single',
+  enableGeoDetection:true,
+  enableBodyTranslation:true,
+  titleTranslateChunkSize:30, /* عدد عناوين الفصول المُترجمة في كل طلب دفعة — يحمي من روابط طويلة جدًا مع روايات كبيرة */
+  wpmMin:200, wpmMax:250,
+  storageKeys:{
+    theme:'flt_theme', font:'flt_font', lang:'flt_lang',
+    bookmarks:'flt_bookmarks', progress:'flt_progress'
   }
+};
+const SEP = '\n@@FLT@@\n';
+const RTL_LANGS = ['ar','he','fa','ur'];
+const LANG_NAMES = { auto:'تلقائي', ar:'العربية', en:'English', ja:'日本語', fr:'Français', de:'Deutsch', es:'Español', it:'Italiano', zh:'中文', ko:'한국어', ru:'Русский', tr:'Türkçe', pt:'Português' };
 
-  function arabicMinutesLabel(n) {
-    if (n <= 0) return "أقل من دقيقة";
-    if (n === 1) return "دقيقة واحدة";
-    if (n === 2) return "دقيقتان";
-    if (n >= 3 && n <= 10) return `${toArabicDigits(n)} دقائق`;
-    return `${toArabicDigits(n)} دقيقة`;
-  }
+/* دول → اللغة السائدة (يُكتفى بالدول غير الناطقة بالإنجليزية؛ أي دولة غير مذكورة تُعامل كإنجليزية) */
+const COUNTRY_LANG = {
+  SA:'ar',AE:'ar',EG:'ar',MA:'ar',DZ:'ar',TN:'ar',LY:'ar',IQ:'ar',JO:'ar',LB:'ar',SY:'ar',YE:'ar',OM:'ar',QA:'ar',KW:'ar',BH:'ar',SD:'ar',PS:'ar',MR:'ar',
+  JP:'ja',
+  KR:'ko',
+  CN:'zh',TW:'zh',HK:'zh',MO:'zh',
+  FR:'fr',CI:'fr',SN:'fr',ML:'fr',NE:'fr',BF:'fr',TG:'fr',BJ:'fr',CD:'fr',CG:'fr',GA:'fr',MC:'fr',HT:'fr',
+  DE:'de',AT:'de',
+  ES:'es',MX:'es',AR:'es',CO:'es',PE:'es',VE:'es',CL:'es',EC:'es',GT:'es',CU:'es',BO:'es',DO:'es',HN:'es',PY:'es',SV:'es',NI:'es',CR:'es',PA:'es',UY:'es',GQ:'es',
+  IT:'it',SM:'it',VA:'it',
+  RU:'ru',BY:'ru',
+  TR:'tr',
+  PT:'pt',BR:'pt',AO:'pt',MZ:'pt',CV:'pt',GW:'pt',ST:'pt',TL:'pt'
+};
 
-  const WORDS_PER_MINUTE = 200;
-  function computeReadingMinutes(chapter) {
-    const words = chapter.paragraphs
-      .join(" ")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean).length;
-    return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
-  }
+/* ---------- قاموس واجهة الاستخدام (i18n) ---------- */
+const TRANSLATIONS = {
+  ar:{ toc:'فهرس المحتويات', fontLabel:'الخط', themeLabel:'المظهر', prevChapter:'الفصل السابق', nextChapter:'الفصل التالي',
+    saveSelection:'حفظ كإشارة', myBookmarks:'إشاراتي المرجعية', verifiedTitle:'مؤلف موثّق', ongoingStatus:'مستمرة', finishedStatus:'منتهية',
+    statWords:'كلمة', statChapters:'فصل', statViews:'مشاهدة', statRating:'التقييم', minutesRead:'دقائق قراءة', lessThanMinute:'أقل من دقيقة',
+    emptyBookmarks:'لا توجد إشارات محفوظة بعد', bookmarkSaved:'تم حفظ الإشارة', bookmarkRemoved:'تم حذف الإشارة', undo:'تراجع',
+    copyBlocked:'تم نسخ النص مع رابط المصدر لحماية حقوق الرواية', rightClickBlocked:'هذا المحتوى محمي', devtoolsBlocked:'أدوات المطوّر غير متاحة هنا',
+    langDetected:'تم اكتشاف لغتك تلقائيًا:', resumeReading:'لديك تقدّم محفوظ في القراءة', resumeAction:'متابعة القراءة',
+    themeDay:'نهار', themeNight:'ليل', themeDusk:'شفق', chapterWord:'الفصل' },
+  en:{ toc:'Table of Contents', fontLabel:'Font', themeLabel:'Theme', prevChapter:'Previous Chapter', nextChapter:'Next Chapter',
+    saveSelection:'Save as bookmark', myBookmarks:'My Bookmarks', verifiedTitle:'Verified author', ongoingStatus:'Ongoing', finishedStatus:'Completed',
+    statWords:'words', statChapters:'chapters', statViews:'views', statRating:'Rating', minutesRead:'min read', lessThanMinute:'Less than a minute',
+    emptyBookmarks:'No bookmarks saved yet', bookmarkSaved:'Bookmark saved', bookmarkRemoved:'Bookmark removed', undo:'Undo',
+    copyBlocked:'Text copied with a source link, to protect the novel\u2019s rights', rightClickBlocked:'This content is protected', devtoolsBlocked:'Developer tools are unavailable here',
+    langDetected:'Your language was detected automatically:', resumeReading:'You have saved reading progress', resumeAction:'Resume reading',
+    themeDay:'Day', themeNight:'Night', themeDusk:'Dusk', chapterWord:'Chapter' },
+  ja:{ toc:'目次', fontLabel:'フォント', themeLabel:'テーマ', prevChapter:'前の章', nextChapter:'次の章',
+    saveSelection:'しおりに保存', myBookmarks:'マイしおり', verifiedTitle:'認証済み作者', ongoingStatus:'連載中', finishedStatus:'完結',
+    statWords:'語', statChapters:'章', statViews:'閲覧数', statRating:'評価', minutesRead:'分で読める', lessThanMinute:'1分未満',
+    emptyBookmarks:'保存されたしおりはまだありません', bookmarkSaved:'しおりを保存しました', bookmarkRemoved:'しおりを削除しました', undo:'元に戻す',
+    copyBlocked:'著作権保護のため、出典リンク付きでコピーされました', rightClickBlocked:'このコンテンツは保護されています', devtoolsBlocked:'ここでは開発者ツールを使用できません',
+    langDetected:'言語を自動検出しました:', resumeReading:'保存された続きがあります', resumeAction:'続きを読む',
+    themeDay:'昼', themeNight:'夜', themeDusk:'黄昏', chapterWord:'第' },
+  fr:{ toc:'Table des matières', fontLabel:'Police', themeLabel:'Thème', prevChapter:'Chapitre précédent', nextChapter:'Chapitre suivant',
+    saveSelection:'Enregistrer comme signet', myBookmarks:'Mes signets', verifiedTitle:'Auteur vérifié', ongoingStatus:'En cours', finishedStatus:'Terminé',
+    statWords:'mots', statChapters:'chapitres', statViews:'vues', statRating:'Note', minutesRead:'min de lecture', lessThanMinute:'Moins d\u2019une minute',
+    emptyBookmarks:'Aucun signet enregistré pour le moment', bookmarkSaved:'Signet enregistré', bookmarkRemoved:'Signet supprimé', undo:'Annuler',
+    copyBlocked:'Texte copié avec un lien source, pour protéger les droits du roman', rightClickBlocked:'Ce contenu est protégé', devtoolsBlocked:'Les outils de développement sont indisponibles ici',
+    langDetected:'Votre langue a été détectée automatiquement :', resumeReading:'Vous avez une progression enregistrée', resumeAction:'Reprendre la lecture',
+    themeDay:'Jour', themeNight:'Nuit', themeDusk:'Crépuscule', chapterWord:'Chapitre' },
+  de:{ toc:'Inhaltsverzeichnis', fontLabel:'Schrift', themeLabel:'Thema', prevChapter:'Vorheriges Kapitel', nextChapter:'Nächstes Kapitel',
+    saveSelection:'Als Lesezeichen speichern', myBookmarks:'Meine Lesezeichen', verifiedTitle:'Verifizierter Autor', ongoingStatus:'Laufend', finishedStatus:'Abgeschlossen',
+    statWords:'Wörter', statChapters:'Kapitel', statViews:'Aufrufe', statRating:'Bewertung', minutesRead:'Min. Lesezeit', lessThanMinute:'Weniger als eine Minute',
+    emptyBookmarks:'Noch keine Lesezeichen gespeichert', bookmarkSaved:'Lesezeichen gespeichert', bookmarkRemoved:'Lesezeichen entfernt', undo:'Rückgängig',
+    copyBlocked:'Text mit Quellenlink kopiert, zum Schutz der Rechte des Romans', rightClickBlocked:'Dieser Inhalt ist geschützt', devtoolsBlocked:'Entwicklertools sind hier nicht verfügbar',
+    langDetected:'Ihre Sprache wurde automatisch erkannt:', resumeReading:'Du hast einen gespeicherten Lesefortschritt', resumeAction:'Weiterlesen',
+    themeDay:'Tag', themeNight:'Nacht', themeDusk:'Dämmerung', chapterWord:'Kapitel' },
+  es:{ toc:'Índice', fontLabel:'Fuente', themeLabel:'Tema', prevChapter:'Capítulo anterior', nextChapter:'Capítulo siguiente',
+    saveSelection:'Guardar como marcador', myBookmarks:'Mis marcadores', verifiedTitle:'Autor verificado', ongoingStatus:'En curso', finishedStatus:'Finalizada',
+    statWords:'palabras', statChapters:'capítulos', statViews:'vistas', statRating:'Valoración', minutesRead:'min de lectura', lessThanMinute:'Menos de un minuto',
+    emptyBookmarks:'Aún no hay marcadores guardados', bookmarkSaved:'Marcador guardado', bookmarkRemoved:'Marcador eliminado', undo:'Deshacer',
+    copyBlocked:'Texto copiado con un enlace de origen, para proteger los derechos de la novela', rightClickBlocked:'Este contenido está protegido', devtoolsBlocked:'Las herramientas de desarrollo no están disponibles aquí',
+    langDetected:'Tu idioma se detectó automáticamente:', resumeReading:'Tienes progreso de lectura guardado', resumeAction:'Continuar leyendo',
+    themeDay:'Día', themeNight:'Noche', themeDusk:'Ocaso', chapterWord:'Capítulo' },
+  it:{ toc:'Indice', fontLabel:'Carattere', themeLabel:'Tema', prevChapter:'Capitolo precedente', nextChapter:'Capitolo successivo',
+    saveSelection:'Salva come segnalibro', myBookmarks:'I miei segnalibri', verifiedTitle:'Autore verificato', ongoingStatus:'In corso', finishedStatus:'Concluso',
+    statWords:'parole', statChapters:'capitoli', statViews:'visualizzazioni', statRating:'Valutazione', minutesRead:'min di lettura', lessThanMinute:'Meno di un minuto',
+    emptyBookmarks:'Nessun segnalibro salvato ancora', bookmarkSaved:'Segnalibro salvato', bookmarkRemoved:'Segnalibro rimosso', undo:'Annulla',
+    copyBlocked:'Testo copiato con un link alla fonte, per proteggere i diritti del romanzo', rightClickBlocked:'Questo contenuto è protetto', devtoolsBlocked:'Gli strumenti per sviluppatori non sono disponibili qui',
+    langDetected:'La tua lingua è stata rilevata automaticamente:', resumeReading:'Hai dei progressi di lettura salvati', resumeAction:'Riprendi lettura',
+    themeDay:'Giorno', themeNight:'Notte', themeDusk:'Crepuscolo', chapterWord:'Capitolo' },
+  zh:{ toc:'目录', fontLabel:'字体', themeLabel:'主题', prevChapter:'上一章', nextChapter:'下一章',
+    saveSelection:'保存为书签', myBookmarks:'我的书签', verifiedTitle:'认证作者', ongoingStatus:'连载中', finishedStatus:'已完结',
+    statWords:'字', statChapters:'章', statViews:'浏览量', statRating:'评分', minutesRead:'分钟阅读', lessThanMinute:'不到一分钟',
+    emptyBookmarks:'暂无已保存的书签', bookmarkSaved:'书签已保存', bookmarkRemoved:'书签已删除', undo:'撤销',
+    copyBlocked:'为保护小说版权，复制的文本已附加来源链接', rightClickBlocked:'此内容受保护', devtoolsBlocked:'此处无法使用开发者工具',
+    langDetected:'已自动检测您的语言：', resumeReading:'您有已保存的阅读进度', resumeAction:'继续阅读',
+    themeDay:'日间', themeNight:'夜间', themeDusk:'黄昏', chapterWord:'第' },
+  ko:{ toc:'목차', fontLabel:'글꼴', themeLabel:'테마', prevChapter:'이전 화', nextChapter:'다음 화',
+    saveSelection:'북마크로 저장', myBookmarks:'내 북마크', verifiedTitle:'인증된 작가', ongoingStatus:'연재 중', finishedStatus:'완결',
+    statWords:'단어', statChapters:'화', statViews:'조회수', statRating:'평점', minutesRead:'분 소요', lessThanMinute:'1분 미만',
+    emptyBookmarks:'저장된 북마크가 아직 없습니다', bookmarkSaved:'북마크가 저장되었습니다', bookmarkRemoved:'북마크가 삭제되었습니다', undo:'실행 취소',
+    copyBlocked:'소설 저작권 보호를 위해 출처 링크와 함께 복사되었습니다', rightClickBlocked:'이 콘텐츠는 보호되어 있습니다', devtoolsBlocked:'여기서는 개발자 도구를 사용할 수 없습니다',
+    langDetected:'언어가 자동으로 감지되었습니다:', resumeReading:'저장된 읽기 진행 상황이 있습니다', resumeAction:'이어서 읽기',
+    themeDay:'낮', themeNight:'밤', themeDusk:'황혼', chapterWord:'화' },
+  ru:{ toc:'Оглавление', fontLabel:'Шрифт', themeLabel:'Тема', prevChapter:'Предыдущая глава', nextChapter:'Следующая глава',
+    saveSelection:'Сохранить как закладку', myBookmarks:'Мои закладки', verifiedTitle:'Проверенный автор', ongoingStatus:'Продолжается', finishedStatus:'Завершено',
+    statWords:'слов', statChapters:'глав', statViews:'просмотров', statRating:'Рейтинг', minutesRead:'мин. чтения', lessThanMinute:'Меньше минуты',
+    emptyBookmarks:'Пока нет сохранённых закладок', bookmarkSaved:'Закладка сохранена', bookmarkRemoved:'Закладка удалена', undo:'Отменить',
+    copyBlocked:'Текст скопирован со ссылкой на источник для защиты прав романа', rightClickBlocked:'Этот контент защищён', devtoolsBlocked:'Инструменты разработчика здесь недоступны',
+    langDetected:'Ваш язык определён автоматически:', resumeReading:'У вас есть сохранённый прогресс чтения', resumeAction:'Продолжить чтение',
+    themeDay:'День', themeNight:'Ночь', themeDusk:'Сумерки', chapterWord:'Глава' },
+  tr:{ toc:'İçindekiler', fontLabel:'Yazı Tipi', themeLabel:'Tema', prevChapter:'Önceki Bölüm', nextChapter:'Sonraki Bölüm',
+    saveSelection:'Yer imi olarak kaydet', myBookmarks:'Yer İmlerim', verifiedTitle:'Onaylı yazar', ongoingStatus:'Devam ediyor', finishedStatus:'Tamamlandı',
+    statWords:'kelime', statChapters:'bölüm', statViews:'görüntülenme', statRating:'Puan', minutesRead:'dk okuma', lessThanMinute:'Bir dakikadan az',
+    emptyBookmarks:'Henüz kaydedilmiş yer imi yok', bookmarkSaved:'Yer imi kaydedildi', bookmarkRemoved:'Yer imi silindi', undo:'Geri al',
+    copyBlocked:'Roman haklarını korumak için metin kaynak bağlantısıyla kopyalandı', rightClickBlocked:'Bu içerik korunmaktadır', devtoolsBlocked:'Geliştirici araçları burada kullanılamaz',
+    langDetected:'Diliniz otomatik olarak algılandı:', resumeReading:'Kaydedilmiş okuma ilerlemeniz var', resumeAction:'Okumaya devam et',
+    themeDay:'Gündüz', themeNight:'Gece', themeDusk:'Alacakaranlık', chapterWord:'Bölüm' },
+  pt:{ toc:'Índice', fontLabel:'Fonte', themeLabel:'Tema', prevChapter:'Capítulo anterior', nextChapter:'Próximo capítulo',
+    saveSelection:'Salvar como marcador', myBookmarks:'Meus marcadores', verifiedTitle:'Autor verificado', ongoingStatus:'Em andamento', finishedStatus:'Concluído',
+    statWords:'palavras', statChapters:'capítulos', statViews:'visualizações', statRating:'Avaliação', minutesRead:'min de leitura', lessThanMinute:'Menos de um minuto',
+    emptyBookmarks:'Ainda não há marcadores salvos', bookmarkSaved:'Marcador salvo', bookmarkRemoved:'Marcador removido', undo:'Desfazer',
+    copyBlocked:'Texto copiado com um link de origem, para proteger os direitos do romance', rightClickBlocked:'Este conteúdo é protegido', devtoolsBlocked:'As ferramentas de desenvolvedor não estão disponíveis aqui',
+    langDetected:'Seu idioma foi detectado automaticamente:', resumeReading:'Você tem progresso de leitura salvo', resumeAction:'Continuar lendo',
+    themeDay:'Dia', themeNight:'Noite', themeDusk:'Crepúsculo', chapterWord:'Capítulo' }
+};
 
-  const FONT_STACKS = {
-    amiri: "'Amiri', serif",
-    notoNaskh: "'Noto Naskh Arabic', serif",
-    cairo: "'Cairo', sans-serif",
-    tajawal: "'Tajawal', sans-serif",
+function t(key, lang){
+  const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  return dict[key] || TRANSLATIONS.ar[key] || key;
+}
+
+/* ---------- الحالة ---------- */
+const state = {
+  chapterIndex:0,
+  lang:'ar', langIsAuto:true,
+  bookmarks:[],
+  translationCache:{},
+  currentTexts:[],
+  lastRemovedBookmark:null
+};
+
+/* ---------- أدوات مساعدة ---------- */
+function $(id){ return document.getElementById(id); }
+function storageGet(key, fallback){
+  try{ const v = localStorage.getItem(key); return v===null ? fallback : JSON.parse(v); }catch(e){ return fallback; }
+}
+function storageSet(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+function countWords(text){ return (text.match(/[\p{L}\p{N}]+/gu) || []).length; }
+function escapeHtml(str){ return str.replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+function chunkArray(arr, size){
+  const out = [];
+  for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size));
+  return out;
+}
+
+function svgIcon(path, opts){
+  opts = opts || {};
+  return '<svg viewBox="0 0 24 24" fill="'+(opts.fill||'none')+'" stroke="currentColor" stroke-width="'+(opts.sw||1.75)+'" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg>';
+}
+const ICONS = {
+  words: svgIcon('<path d="M6 4h9l3 3v13H6z"/><path d="M9 9h6M9 13h6M9 17h4"/>'),
+  chapters: svgIcon('<path d="M4 6a2 2 0 012-2h9v16H6a2 2 0 01-2-2V6z"/><path d="M15 4h3a2 2 0 012 2v14l-2-1.3-2 1.3V4z"/>'),
+  eye: svgIcon('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>'),
+  star: svgIcon('<path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.2L6.6 19.3l1.3-6-4.6-4.1 6.1-.6z"/>', {fill:'currentColor'}),
+  starOutline: svgIcon('<path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.2L6.6 19.3l1.3-6-4.6-4.1 6.1-.6z"/>'),
+  bookmark: svgIcon('<path d="M6 4h12v17l-6-4-6 4V4z"/>'),
+  bookmarkFilled: svgIcon('<path d="M6 4h12v17l-6-4-6 4V4z"/>', {fill:'currentColor'}),
+  trash: svgIcon('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
+  chevron: svgIcon('<path d="M9 6l6 6-6 6"/>'),
+  lock: svgIcon('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>'),
+  check: svgIcon('<path d="M20 6L9 17l-5-5"/>')
+};
+
+/* ---------- إشعارات Toast ---------- */
+function showToast(message, opts){
+  opts = opts || {};
+  const stack = $('toastStack');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = (opts.icon||ICONS.lock) + '<span>'+escapeHtml(message)+'</span>' +
+    (opts.actionLabel ? '<button class="toast-action">'+escapeHtml(opts.actionLabel)+'</button>' : '');
+  stack.appendChild(el);
+  requestAnimationFrame(()=> el.classList.add('show'));
+  let removed = false;
+  const remove = ()=>{
+    if(removed) return; removed = true;
+    el.classList.remove('show');
+    setTimeout(()=> el.remove(), 300);
   };
-
-  const LOCALE_DEFAULT_FONT = {
-    ar: "amiri",
-    fr: "cairo",
-    en: "tajawal",
-    default: "notoNaskh",
-  };
-
-  function getDeviceLocale() {
-    return (
-      (navigator.languages && navigator.languages[0]) ||
-      navigator.language ||
-      Intl.DateTimeFormat().resolvedOptions().locale ||
-      "ar"
-    ).toLowerCase();
+  if(opts.actionLabel){
+    el.querySelector('.toast-action').addEventListener('click', ()=>{ opts.onAction && opts.onAction(); remove(); });
   }
+  setTimeout(remove, opts.timeout || 4200);
+}
 
-  function getLocaleCode(locale) {
-    return String(locale || "").split("-")[0];
+/* ============================================================
+   الترجمة والتوطين (i18n + auto geo-detection)
+   ============================================================ */
+function applyStaticTranslations(lang){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.getAttribute('data-i18n');
+    const val = t(key, lang);
+    if(val) el.textContent = val;
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{
+    const key = el.getAttribute('data-i18n-title');
+    el.setAttribute('title', t(key, lang));
+  });
+}
+
+async function translateStrings(strings, lang){
+  if(!strings.length) return strings;
+  try{
+    const joined = strings.join(SEP);
+    const translated = await translateText(joined, lang);
+    const parts = translated.split(SEP);
+    if(parts.length === strings.length) return parts;
+    return strings;
+  }catch(e){ return strings; }
+}
+
+async function translateText(text, targetLang){
+  const url = CONFIG.translateEndpoint + '?client=gtx&sl=ar&tl=' + encodeURIComponent(targetLang) + '&dt=t&q=' + encodeURIComponent(text);
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('translate-http-'+res.status);
+  const data = await res.json();
+  return data[0].map(chunk=> chunk[0]).join('');
+}
+
+async function detectLanguage(){
+  const saved = storageGet(CONFIG.storageKeys.lang, 'auto');
+  if(saved !== 'auto'){
+    return { lang: saved, isAuto:false };
   }
-
-  function getDefaultFontForLocale(locale) {
-    const code = getLocaleCode(locale);
-    return LOCALE_DEFAULT_FONT[code] || LOCALE_DEFAULT_FONT.default;
+  let lang = null;
+  if(CONFIG.enableGeoDetection){
+    try{
+      const res = await fetch(CONFIG.geoApiUrl);
+      if(res.ok){
+        const data = await res.json();
+        const cc = data.country_code || data.country;
+        if(cc && COUNTRY_LANG[cc]) lang = COUNTRY_LANG[cc];
+        else if(cc) lang = 'en';
+      }
+    }catch(e){ /* تعذّر الوصول لخدمة تحديد الموقع — سيُستخدم البديل */ }
   }
-
-  /* ------------------------------------------------------------
-     الحالة العامة
-     ------------------------------------------------------------ */
-  const deviceLocale = getDeviceLocale();
-
-  const state = {
-    chapterIndex: 0,
-    locale: deviceLocale,
-    font: getDefaultFontForLocale(deviceLocale),
-    fontSize: 19,
-    theme: "sepia",
-    bookmarks: [], // { chapterId, paraIndex, chapterTitle, snippet }
-  };
-
-  /* ------------------------------------------------------------
-     مراجع العناصر
-     ------------------------------------------------------------ */
-  const els = {
-    progressFill: document.getElementById("progressFill"),
-    sidebar: document.getElementById("sidebar"),
-    scrim: document.getElementById("scrim"),
-    tocToggle: document.getElementById("tocToggle"),
-    tocList: document.getElementById("tocList"),
-    novelCover: document.getElementById("novelCover"),
-    novelTitle: document.getElementById("novelTitle"),
-    novelAuthor: document.getElementById("novelAuthor"),
-    novelStatus: document.getElementById("novelStatus"),
-    novelSynopsis: document.getElementById("novelSynopsis"),
-    reader: document.getElementById("reader"),
-    chapterEyebrow: document.getElementById("chapterEyebrow"),
-    chapterTitle: document.getElementById("chapterTitle"),
-    readingTime: document.getElementById("readingTime"),
-    chapterBody: document.getElementById("chapterBody"),
-    prevBtn: document.getElementById("prevBtn"),
-    nextBtn: document.getElementById("nextBtn"),
-    chapterProgressLabel: document.getElementById("chapterProgressLabel"),
-    settingsBtn: document.getElementById("settingsBtn"),
-    settingsPopover: document.getElementById("settingsPopover"),
-    settingsClose: document.getElementById("settingsClose"),
-    fontOptions: document.getElementById("fontOptions"),
-    fontDec: document.getElementById("fontDec"),
-    fontInc: document.getElementById("fontInc"),
-    fontSizeLabel: document.getElementById("fontSizeLabel"),
-    themeOptions: document.getElementById("themeOptions"),
-    bookmarksBtn: document.getElementById("bookmarksBtn"),
-    bookmarksBadge: document.getElementById("bookmarksBadge"),
-    bookmarksPopover: document.getElementById("bookmarksPopover"),
-    bookmarksClose: document.getElementById("bookmarksClose"),
-    bookmarksList: document.getElementById("bookmarksList"),
-    toast: document.getElementById("toast"),
-  };
-
-  /* ------------------------------------------------------------
-     الشريط الجانبي: بيانات الرواية + الفهرس
-     ------------------------------------------------------------ */
-  function renderNovelInfo() {
-    els.novelTitle.textContent = NOVEL.title;
-    els.novelAuthor.textContent = NOVEL.author;
-
-    const isOngoing = NOVEL.status === "ongoing";
-    els.novelStatus.textContent = isOngoing ? "مستمرة" : "منتهية";
-    els.novelStatus.classList.remove("ongoing", "completed");
-    els.novelStatus.classList.add(isOngoing ? "ongoing" : "completed");
-
-    els.novelSynopsis.textContent = NOVEL.synopsis;
-
-    els.novelCover.classList.remove("has-image");
-    els.novelCover.classList.add("empty");
-    els.novelCover.style.removeProperty("--cover-url");
-    els.novelCover.textContent = "أضف الغلاف لاحقًا";
-    els.novelCover.setAttribute("aria-label", "غلاف فارغ لإضافته لاحقًا");
+  if(!lang){
+    const nav = (navigator.language || 'ar').slice(0,2);
+    lang = TRANSLATIONS[nav] ? nav : (nav==='ar' ? 'ar' : 'en');
   }
+  return { lang, isAuto:true };
+}
 
-  function renderTOC() {
-    els.tocList.innerHTML = "";
-    NOVEL.chapters.forEach((chapter, idx) => {
-      const minutes = computeReadingMinutes(chapter);
-      const li = document.createElement("li");
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "toc-item";
-      btn.dataset.index = String(idx);
-      btn.innerHTML = `
-        <span class="toc-num">${toArabicDigits(idx + 1)}.</span>
-        <span class="toc-name">${chapter.title}</span>
-        <span class="toc-leader" aria-hidden="true"></span>
-        <span class="toc-time">${toArabicDigits(minutes)} د</span>
-      `;
-      btn.addEventListener("click", () => {
-        goToChapter(idx);
-        if (window.matchMedia("(max-width: 959px)").matches) closeSidebar();
-      });
-      li.appendChild(btn);
-      els.tocList.appendChild(li);
-    });
+function setDirForLang(lang){
+  const dir = RTL_LANGS.includes(lang) ? 'rtl' : 'ltr';
+  document.documentElement.setAttribute('dir', dir);
+  document.documentElement.setAttribute('lang', lang);
+}
+
+function chapterTitle(ch){ return (ch._t && ch._t[state.lang]) || ch.title; }
+
+async function translateChapterTitles(lang){
+  if(lang==='ar') return;
+  const need = NOVEL.chapters.filter(c=> !(c._t && c._t[lang]));
+  if(!need.length) return;
+  const chunks = chunkArray(need, CONFIG.titleTranslateChunkSize);
+  for(const chunk of chunks){
+    try{
+      const translated = await translateStrings(chunk.map(c=>c.title), lang);
+      chunk.forEach((c,i)=>{ c._t = c._t||{}; c._t[lang] = translated[i]; });
+    }catch(e){ /* تبقى عناوين هذه الدفعة كما هي عند فشلها */ }
   }
+}
 
-  function updateActiveTOCItem() {
-    els.tocList.querySelectorAll(".toc-item").forEach((btn) => {
-      btn.classList.toggle("is-active", Number(btn.dataset.index) === state.chapterIndex);
-    });
+async function applyLanguage(lang, isAuto, announce){
+  state.lang = lang; state.langIsAuto = !!isAuto;
+  setDirForLang(lang);
+  applyStaticTranslations(lang);
+  updateLangTriggerLabel();
+  renderStatsBar();
+  renderStatusBadge();
+  renderSynopsis();
+
+  if(lang !== 'ar'){
+    await translateChapterTitles(lang);
   }
+  buildSidebar();
+  renderBookmarksList();
+  renderChapterEyebrow();
+  updateReadingTimeDisplay();
 
-  /* ------------------------------------------------------------
-     عرض الفصل
-     ------------------------------------------------------------ */
-  function renderChapter() {
-    const chapter = NOVEL.chapters[state.chapterIndex];
-    const total = NOVEL.chapters.length;
-
-    els.chapterEyebrow.textContent = `الفصل ${toArabicDigits(state.chapterIndex + 1)} من ${toArabicDigits(total)}`;
-    els.chapterTitle.textContent = chapter.title;
-
-    const minutes = computeReadingMinutes(chapter);
-    els.readingTime.textContent = `وقت القراءة المقدّر: ${arabicMinutesLabel(minutes)}`;
-
-    els.chapterBody.innerHTML = "";
-    chapter.paragraphs.forEach((text, paraIndex) => {
-      const wrap = document.createElement("div");
-      wrap.className = "para-wrap";
-
-      const bmBtn = document.createElement("button");
-      bmBtn.type = "button";
-      bmBtn.className = "para-bookmark";
-      bmBtn.setAttribute("aria-label", "إشارة مرجعية لهذه الفقرة");
-      bmBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-svg">
-          <path d="M7 4.5A1.5 1.5 0 0 1 8.5 3h7A1.5 1.5 0 0 1 17 4.5V21l-5-3-5 3V4.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-        </svg>
-      `;
-      bmBtn.dataset.paraIndex = String(paraIndex);
-      bmBtn.addEventListener("click", () => toggleBookmark(chapter.id, paraIndex, text));
-
-      const p = document.createElement("p");
-      p.className = "para";
-      p.textContent = text;
-      p.dataset.paraIndex = String(paraIndex);
-
-      wrap.appendChild(bmBtn);
-      wrap.appendChild(p);
-      els.chapterBody.appendChild(wrap);
-    });
-
-    refreshBookmarkIcons();
-
-    els.prevBtn.disabled = state.chapterIndex === 0;
-    els.nextBtn.disabled = state.chapterIndex === total - 1;
-    els.chapterProgressLabel.textContent = `${toArabicDigits(state.chapterIndex + 1)} / ${toArabicDigits(total)}`;
-
-    updateActiveTOCItem();
-    els.reader.scrollTop = 0;
-    updateProgressBar();
+  if(announce && lang !== 'ar'){
+    showToast(t('langDetected', lang) + ' ' + (LANG_NAMES[lang]||lang));
   }
-
-  function goToChapter(idx) {
-    if (idx < 0 || idx >= NOVEL.chapters.length) return;
-    state.chapterIndex = idx;
-    renderChapter();
+  if(lang !== 'ar' && CONFIG.enableBodyTranslation){
+    translateChapterBody(lang);
+  } else {
+    renderChapterTexts(getCurrentChapter());
   }
+}
 
-  /* ------------------------------------------------------------
-     شريط تقدّم القراءة
-     ------------------------------------------------------------ */
-  function updateProgressBar() {
-    const el = els.reader;
-    const scrollable = el.scrollHeight - el.clientHeight;
-    const pct = scrollable > 0 ? (el.scrollTop / scrollable) * 100 : 0;
-    els.progressFill.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+function updateLangTriggerLabel(){
+  $('langTriggerLabel').textContent = state.langIsAuto ? LANG_NAMES.auto : (LANG_NAMES[state.lang]||state.lang);
+}
+
+async function translateChapterBody(lang){
+  const chapter = getCurrentChapter();
+  if(!chapter) return;
+  $('chapterTitle').textContent = chapterTitle(chapter);
+  const bodyEl = $('chapterBody');
+  const cacheKey = chapter.id+'::body::'+lang;
+  if(state.translationCache[cacheKey]){
+    paintChapterTexts(state.translationCache[cacheKey]);
+    return;
   }
+  bodyEl.style.opacity = '.55';
+  try{
+    const translatedTexts = await translateStrings(state.currentTexts, lang);
+    state.translationCache[cacheKey] = translatedTexts;
+    paintChapterTexts(translatedTexts);
+  }catch(e){ /* يبقى النص الأصلي عند فشل الترجمة */ }
+  bodyEl.style.opacity = '';
+}
+function paintChapterTexts(texts){
+  const nodes = document.querySelectorAll('#chapterBody [data-tidx]');
+  nodes.forEach(node=>{
+    const idx = +node.getAttribute('data-tidx');
+    if(texts[idx] !== undefined) node.textContent = texts[idx];
+  });
+}
 
-  els.reader.addEventListener("scroll", updateProgressBar, { passive: true });
-  window.addEventListener("resize", updateProgressBar);
+/* ============================================================
+   محرك عرض الفصول
+   ============================================================ */
+function getCurrentChapter(){ return NOVEL.chapters[state.chapterIndex]; }
+function assignChapterIds(){
+  NOVEL.chapters.forEach((ch,i)=>{ if(ch.id===undefined || ch.id===null) ch.id = i+1; });
+}
+function computeGlobalWordCount(){
+  let total = 0;
+  NOVEL.chapters.forEach(ch=>{
+    ch.paragraphs.forEach(p=>{ total += countWords(typeof p === 'string' ? p : p.h2); });
+  });
+  return total;
+}
 
-  /* ------------------------------------------------------------
-     الإشارات المرجعية
-     ------------------------------------------------------------ */
-  function bookmarkKey(chapterId, paraIndex) {
-    return `${chapterId}_${paraIndex}`;
-  }
-
-  function toggleBookmark(chapterId, paraIndex, text) {
-    const key = bookmarkKey(chapterId, paraIndex);
-    const existingIdx = state.bookmarks.findIndex(
-      (b) => bookmarkKey(b.chapterId, b.paraIndex) === key
-    );
-
-    if (existingIdx > -1) {
-      state.bookmarks.splice(existingIdx, 1);
-      showToast("تمت إزالة الإشارة المرجعية");
+function renderChapterTexts(chapter){
+  if(!chapter) return;
+  $('chapterTitle').textContent = chapter.title;
+  const bodyEl = $('chapterBody');
+  bodyEl.innerHTML = '';
+  const texts = [];
+  chapter.paragraphs.forEach((p, i)=>{
+    if(typeof p === 'object' && p.h2){
+      const h2 = document.createElement('h2');
+      h2.setAttribute('data-tidx', texts.length);
+      h2.textContent = p.h2;
+      texts.push(p.h2);
+      bodyEl.appendChild(h2);
     } else {
-      const chapter = NOVEL.chapters.find((c) => c.id === chapterId);
-      state.bookmarks.push({
-        chapterId,
-        paraIndex,
-        chapterTitle: chapter ? chapter.title : "",
-        snippet: text.length > 70 ? text.slice(0, 70).trim() + "…" : text,
-      });
-      showToast("تم حفظ الإشارة المرجعية");
-    }
-
-    refreshBookmarkIcons();
-    renderBookmarksPopover();
-  }
-
-  function refreshBookmarkIcons() {
-    const chapter = NOVEL.chapters[state.chapterIndex];
-    els.chapterBody.querySelectorAll(".para-bookmark").forEach((btn) => {
-      const paraIndex = Number(btn.dataset.paraIndex);
-      const isSaved = state.bookmarks.some(
-        (b) => b.chapterId === chapter.id && b.paraIndex === paraIndex
-      );
-      btn.classList.toggle("is-active", isSaved);
-    });
-
-    const count = state.bookmarks.length;
-    els.bookmarksBadge.hidden = count === 0;
-    els.bookmarksBadge.textContent = toArabicDigits(count);
-  }
-
-  function renderBookmarksPopover() {
-    els.bookmarksList.innerHTML = "";
-    if (state.bookmarks.length === 0) {
-      const empty = document.createElement("p");
-      empty.className = "bookmarks-empty";
-      empty.textContent = "لم تحفظ أي إشارة مرجعية بعد. اضغط على الأيقونة بجانب أي فقرة لحفظها.";
-      els.bookmarksList.appendChild(empty);
-      return;
-    }
-
-    state.bookmarks.forEach((b) => {
-      const li = document.createElement("li");
-      li.className = "bookmark-item";
-
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.innerHTML = `
-        <span class="bookmark-chapter">${b.chapterTitle}</span>
-        <span class="bookmark-snippet">${b.snippet}</span>
-      `;
-      btn.addEventListener("click", () => {
-        const chapterIdx = NOVEL.chapters.findIndex((c) => c.id === b.chapterId);
-        if (chapterIdx === -1) return;
-        goToChapter(chapterIdx);
-        closePopover(els.bookmarksPopover, els.bookmarksBtn);
-        requestAnimationFrame(() => {
-          const target = els.chapterBody.querySelector(
-            `.para[data-para-index="${b.paraIndex}"]`
-          );
-          if (target) {
-            target.scrollIntoView({ block: "center", behavior: "smooth" });
-            target.classList.add("para-flash");
-            setTimeout(() => target.classList.remove("para-flash"), 1600);
-          }
-        });
-      });
-
-      li.appendChild(btn);
-      els.bookmarksList.appendChild(li);
-    });
-  }
-
-  /* ------------------------------------------------------------
-     إعدادات القراءة
-     ------------------------------------------------------------ */
-  function setFont(fontKey) {
-    const safeFont = FONT_STACKS[fontKey] ? fontKey : getDefaultFontForLocale(state.locale);
-    state.font = safeFont;
-
-    document.documentElement.style.setProperty("--font-reading", FONT_STACKS[safeFont]);
-    document.documentElement.style.setProperty("--font-display", FONT_STACKS[safeFont]);
-
-    els.fontOptions.querySelectorAll(".option-chip").forEach((chip) => {
-      chip.classList.toggle("is-active", chip.dataset.font === safeFont);
-    });
-  }
-
-  function setFontSize(size) {
-    state.fontSize = Math.min(26, Math.max(14, size));
-    document.documentElement.style.setProperty("--reading-font-size", `${state.fontSize}px`);
-    els.fontSizeLabel.textContent = toArabicDigits(state.fontSize);
-  }
-
-  function setTheme(themeKey) {
-    state.theme = themeKey;
-    document.documentElement.setAttribute("data-theme", themeKey);
-    els.themeOptions.querySelectorAll(".theme-swatch").forEach((sw) => {
-      sw.classList.toggle("is-active", sw.dataset.theme === themeKey);
-    });
-  }
-
-  els.fontOptions.addEventListener("click", (e) => {
-    const chip = e.target.closest(".option-chip");
-    if (chip) setFont(chip.dataset.font);
-  });
-
-  els.fontDec.addEventListener("click", () => setFontSize(state.fontSize - 1));
-  els.fontInc.addEventListener("click", () => setFontSize(state.fontSize + 1));
-
-  els.themeOptions.addEventListener("click", (e) => {
-    const sw = e.target.closest(".theme-swatch");
-    if (sw) setTheme(sw.dataset.theme);
-  });
-
-  /* ------------------------------------------------------------
-     التنقل بين الفصول
-     ------------------------------------------------------------ */
-  els.prevBtn.addEventListener("click", () => goToChapter(state.chapterIndex - 1));
-  els.nextBtn.addEventListener("click", () => goToChapter(state.chapterIndex + 1));
-
-  /* ------------------------------------------------------------
-     فتح/إغلاق القوائم المنبثقة
-     ------------------------------------------------------------ */
-  function openPopover(popoverEl, btnEl) {
-    popoverEl.hidden = false;
-    btnEl.setAttribute("aria-expanded", "true");
-  }
-
-  function closePopover(popoverEl, btnEl) {
-    popoverEl.hidden = true;
-    btnEl.setAttribute("aria-expanded", "false");
-  }
-
-  function togglePopover(popoverEl, btnEl) {
-    if (popoverEl.hidden) {
-      [els.settingsPopover, els.bookmarksPopover].forEach((p) => {
-        if (p !== popoverEl) p.hidden = true;
-      });
-      openPopover(popoverEl, btnEl);
-    } else {
-      closePopover(popoverEl, btnEl);
-    }
-  }
-
-  els.settingsBtn.addEventListener("click", () => togglePopover(els.settingsPopover, els.settingsBtn));
-
-  els.settingsClose.addEventListener("click", () => closePopover(els.settingsPopover, els.settingsBtn));
-
-  els.bookmarksBtn.addEventListener("click", () => {
-    renderBookmarksPopover();
-    togglePopover(els.bookmarksPopover, els.bookmarksBtn);
-  });
-
-  els.bookmarksClose.addEventListener("click", () => closePopover(els.bookmarksPopover, els.bookmarksBtn));
-
-  document.addEventListener("click", (e) => {
-    if (
-      !els.settingsPopover.hidden &&
-      !els.settingsPopover.contains(e.target) &&
-      !els.settingsBtn.contains(e.target)
-    ) {
-      closePopover(els.settingsPopover, els.settingsBtn);
-    }
-
-    if (
-      !els.bookmarksPopover.hidden &&
-      !els.bookmarksPopover.contains(e.target) &&
-      !els.bookmarksBtn.contains(e.target)
-    ) {
-      closePopover(els.bookmarksPopover, els.bookmarksBtn);
+      const wrap = document.createElement('div');
+      wrap.className = 'p-wrap';
+      wrap.setAttribute('data-pid', chapter.id+'-'+i);
+      const para = document.createElement('p');
+      para.setAttribute('data-tidx', texts.length);
+      para.textContent = p;
+      texts.push(p);
+      const btn = document.createElement('button');
+      btn.className = 'p-bookmark';
+      btn.setAttribute('aria-label','حفظ الفقرة كإشارة');
+      btn.setAttribute('aria-pressed','false');
+      btn.innerHTML = ICONS.bookmark;
+      btn.addEventListener('click', ()=> toggleParagraphBookmark(chapter, i, p, wrap, btn));
+      wrap.appendChild(btn);
+      wrap.appendChild(para);
+      bodyEl.appendChild(wrap);
     }
   });
+  state.currentTexts = texts;
+  markSavedParagraphs(chapter);
+}
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closePopover(els.settingsPopover, els.settingsBtn);
-      closePopover(els.bookmarksPopover, els.bookmarksBtn);
+function markSavedParagraphs(chapter){
+  document.querySelectorAll('#chapterBody .p-wrap').forEach(wrap=>{
+    const pid = wrap.getAttribute('data-pid');
+    const btn = wrap.querySelector('.p-bookmark');
+    const saved = state.bookmarks.some(b=> b.pid===pid && b.type==='paragraph');
+    btn.classList.toggle('saved', saved);
+    btn.setAttribute('aria-pressed', saved ? 'true':'false');
+    btn.innerHTML = saved ? ICONS.bookmarkFilled : ICONS.bookmark;
+  });
+}
+
+function updateReadingTimeDisplay(){
+  const chapter = getCurrentChapter();
+  if(!chapter) return;
+  const words = chapter.paragraphs.reduce((sum,p)=> sum + countWords(typeof p==='string'?p:p.h2), 0);
+  const avgWpm = (CONFIG.wpmMin + CONFIG.wpmMax)/2;
+  const minutes = Math.round(words / avgWpm);
+  const label = minutes < 1 ? t('lessThanMinute', state.lang) : (minutes + ' ' + t('minutesRead', state.lang));
+  $('readingTimeText').textContent = label;
+}
+
+function renderChapterEyebrow(){
+  const total = NOVEL.chapters.length;
+  $('chapterEyebrow').textContent = t('chapterWord', state.lang) + ' ' + (state.chapterIndex+1) + ' / ' + total;
+}
+
+function renderChapterNav(){
+  $('prevBtn').disabled = state.chapterIndex === 0;
+  $('nextBtn').disabled = state.chapterIndex === NOVEL.chapters.length-1;
+}
+
+function renderChapter(c, opts){
+  opts = opts || {};
+  state.chapterIndex = c;
+  const chapter = getCurrentChapter();
+  if(!chapter) return;
+
+  renderChapterEyebrow();
+  renderChapterTexts(chapter);
+  renderChapterNav();
+  updateReadingTimeDisplay();
+  document.title = chapter.title + ' — for lunch time';
+  storageSet(CONFIG.storageKeys.progress, c);
+  updateActiveSidebarLink();
+
+  if(state.lang !== 'ar' && CONFIG.enableBodyTranslation){
+    translateChapterBody(state.lang);
+  }
+  if(!opts.silentScroll){
+    const target = $('readerPage');
+    const top = target.getBoundingClientRect().top + window.scrollY - 90;
+    window.scrollTo({ top, behavior: opts.jump ? 'smooth' : 'auto' });
+  }
+  requestAnimationFrame(updateProgressBeam);
+}
+
+function goNext(){
+  if(state.chapterIndex < NOVEL.chapters.length-1) renderChapter(state.chapterIndex+1);
+}
+function goPrev(){
+  if(state.chapterIndex > 0) renderChapter(state.chapterIndex-1);
+}
+
+/* ============================================================
+   الشريط الجانبي (الفهرس) — قائمة مسطّحة من الفصول
+   ============================================================ */
+function buildSidebar(){
+  const list = $('chapterList');
+  list.innerHTML = '';
+  NOVEL.chapters.forEach((ch,ci)=>{
+    const link = document.createElement('button');
+    link.className = 'chapter-link' + (ci===state.chapterIndex ? ' active':'');
+    link.setAttribute('data-idx', ci);
+    link.innerHTML = '<span class="num">'+(ci+1)+'</span><span></span>';
+    link.querySelector('span:last-child').textContent = chapterTitle(ch);
+    link.addEventListener('click', ()=>{
+      renderChapter(ci, {jump:true});
       closeSidebar();
+    });
+    list.appendChild(link);
+  });
+}
+function updateActiveSidebarLink(){
+  document.querySelectorAll('.chapter-link').forEach(link=>{
+    link.classList.toggle('active', +link.getAttribute('data-idx') === state.chapterIndex);
+  });
+}
+function openSidebar(){ $('sidebar').classList.add('open'); $('sidebarOverlay').classList.add('show'); }
+function closeSidebar(){ $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); }
+
+/* ============================================================
+   شريط الإحصاءات وشارة الحالة والتقييم والملخّص
+   ============================================================ */
+function renderStarRating(ratingOutOf10){
+  const pct = Math.max(0, Math.min(100, (ratingOutOf10/10)*100));
+  return '<span class="stars" style="position:relative;display:inline-flex;">' +
+    '<span style="display:flex;gap:2px;opacity:.3;">'+Array(5).fill('<i style="width:15px;height:15px;display:inline-flex">'+ICONS.star+'</i>').join('')+'</span>' +
+    '<span style="position:absolute;inset:0;overflow:hidden;width:'+pct+'%;display:flex;gap:2px;color:var(--sky);">'+Array(5).fill('<i style="width:15px;height:15px;display:inline-flex">'+ICONS.star+'</i>').join('')+'</span>' +
+    '</span>';
+}
+function renderStatsBar(){
+  const words = computeGlobalWordCount();
+  const bar = $('statsBar');
+  bar.innerHTML =
+    statItem(ICONS.words, words.toLocaleString(state.lang==='ar'?'ar':state.lang), t('statWords', state.lang)) +
+    statItem(ICONS.chapters, NOVEL.chapters.length, t('statChapters', state.lang)) +
+    statItem(ICONS.eye, (NOVEL.views||0).toLocaleString(state.lang==='ar'?'ar':state.lang), t('statViews', state.lang)) +
+    '<div class="stat-item"><span style="color:var(--sky);display:flex">'+ICONS.starOutline+'</span><div class="stat-text"><span class="stat-value">'+(NOVEL.rating||0).toFixed(1)+'/10</span>'+renderStarRating(NOVEL.rating||0)+'</div></div>';
+}
+function statItem(icon, value, label){
+  return '<div class="stat-item">'+icon+'<div class="stat-text"><span class="stat-value">'+value+'</span><span class="stat-label">'+label+'</span></div></div>';
+}
+function renderStatusBadge(){
+  const badge = $('statusBadge');
+  const isOngoing = NOVEL.status === 'ongoing';
+  badge.classList.toggle('ongoing', isOngoing);
+  badge.classList.toggle('finished', !isOngoing);
+  $('statusText').textContent = isOngoing ? t('ongoingStatus', state.lang) : t('finishedStatus', state.lang);
+}
+function renderSynopsis(){
+  const el = $('novelSynopsis');
+  if(NOVEL.synopsis){ el.textContent = NOVEL.synopsis; el.style.display = ''; }
+  else { el.style.display = 'none'; }
+}
+function renderHeroStatic(){
+  $('novelTitle').textContent = NOVEL.title;
+  $('novelAuthor').textContent = NOVEL.author;
+  if(NOVEL.coverImage){
+    $('coverFrame').innerHTML = '<img src="'+NOVEL.coverImage+'" alt="'+escapeHtml(NOVEL.title)+'" draggable="false">';
+  }
+}
+
+/* ============================================================
+   شريط تقدّم القراءة
+   ============================================================ */
+let beamTicking = false;
+function updateProgressBeam(){
+  const doc = document.documentElement;
+  const scrollable = doc.scrollHeight - doc.clientHeight;
+  const pct = scrollable > 0 ? (window.scrollY/scrollable)*100 : 0;
+  const clamped = Math.min(100, Math.max(0,pct));
+  $('progressBeam').style.width = clamped + '%';
+  $('progressBeam').setAttribute('aria-valuenow', Math.round(clamped));
+  beamTicking = false;
+}
+function onScroll(){
+  if(!beamTicking){ requestAnimationFrame(updateProgressBeam); beamTicking = true; }
+}
+
+/* ============================================================
+   الإشارات المرجعية
+   ============================================================ */
+function loadBookmarks(){ state.bookmarks = storageGet(CONFIG.storageKeys.bookmarks, []); }
+function persistBookmarks(){ storageSet(CONFIG.storageKeys.bookmarks, state.bookmarks); updateBookmarksBadge(); }
+function updateBookmarksBadge(){
+  const el = $('bmCount');
+  const n = state.bookmarks.length;
+  el.textContent = n;
+  el.classList.toggle('show', n>0);
+}
+function addBookmark(bm){
+  bm.id = Date.now()+'-'+Math.random().toString(36).slice(2,7);
+  bm.savedAt = new Date().toISOString();
+  state.bookmarks.unshift(bm);
+  persistBookmarks();
+  renderBookmarksList();
+  showToast(t('bookmarkSaved', state.lang), {icon:ICONS.bookmarkFilled});
+}
+function removeBookmark(id){
+  const idx = state.bookmarks.findIndex(b=>b.id===id);
+  if(idx===-1) return;
+  state.lastRemovedBookmark = {item: state.bookmarks[idx], index: idx};
+  state.bookmarks.splice(idx,1);
+  persistBookmarks();
+  renderBookmarksList();
+  showToast(t('bookmarkRemoved', state.lang), {
+    icon:ICONS.trash,
+    actionLabel:t('undo', state.lang),
+    onAction:()=>{
+      if(state.lastRemovedBookmark){
+        state.bookmarks.splice(state.lastRemovedBookmark.index,0,state.lastRemovedBookmark.item);
+        persistBookmarks(); renderBookmarksList();
+      }
     }
   });
-
-  /* ------------------------------------------------------------
-     قائمة الفهرس على الجوال
-     ------------------------------------------------------------ */
-  function openSidebar() {
-    els.sidebar.classList.add("is-open");
-    els.scrim.hidden = false;
-    els.tocToggle.setAttribute("aria-expanded", "true");
-  }
-
-  function closeSidebar() {
-    els.sidebar.classList.remove("is-open");
-    els.scrim.hidden = true;
-    els.tocToggle.setAttribute("aria-expanded", "false");
-  }
-
-  els.tocToggle.addEventListener("click", () => {
-    els.sidebar.classList.contains("is-open") ? closeSidebar() : openSidebar();
+  markSavedParagraphs(getCurrentChapter());
+}
+function toggleParagraphBookmark(chapter, i, text, wrapEl, btnEl){
+  const pid = chapter.id+'-'+i;
+  const existing = state.bookmarks.find(b=> b.pid===pid && b.type==='paragraph');
+  if(existing){ removeBookmark(existing.id); return; }
+  addBookmark({
+    type:'paragraph', pid, chapterIndex: state.chapterIndex,
+    chapterTitle: chapter.title, excerpt: text.slice(0,140) + (text.length>140?'…':'')
   });
-
-  els.scrim.addEventListener("click", closeSidebar);
-
-  /* ------------------------------------------------------------
-     حماية بسيطة من النسخ
-     ------------------------------------------------------------ */
-  function shieldNote() {
-    showToast("هذا المحتوى محمي من النسخ");
+  markSavedParagraphs(chapter);
+}
+function renderBookmarksList(){
+  const list = $('bookmarksList');
+  list.innerHTML = '';
+  if(!state.bookmarks.length){
+    list.innerHTML = '<div class="empty-state">'+ICONS.bookmark+'<p>'+t('emptyBookmarks', state.lang)+'</p></div>';
+    return;
   }
+  state.bookmarks.forEach(bm=>{
+    const card = document.createElement('div');
+    card.className = 'bookmark-card';
+    const date = new Date(bm.savedAt);
+    const dateStr = date.toLocaleDateString(state.lang==='ar'?'ar':state.lang, {day:'numeric', month:'short'}) + ' · ' + date.toLocaleTimeString(state.lang==='ar'?'ar':state.lang, {hour:'2-digit', minute:'2-digit'});
+    card.innerHTML =
+      '<div class="bm-top"><div><div class="bm-chapter"></div><div class="bm-excerpt"></div></div>'+
+      '<button class="bm-delete" aria-label="حذف">'+ICONS.trash+'</button></div>'+
+      '<div class="bm-date">'+dateStr+'</div>';
+    card.querySelector('.bm-chapter').textContent = bm.chapterTitle;
+    card.querySelector('.bm-excerpt').textContent = bm.excerpt;
+    card.querySelector('.bm-delete').addEventListener('click', (e)=>{ e.stopPropagation(); removeBookmark(bm.id); });
+    card.addEventListener('click', ()=> jumpToBookmark(bm));
+    list.appendChild(card);
+  });
+}
+function jumpToBookmark(bm){
+  const needsNav = state.chapterIndex !== bm.chapterIndex;
+  if(needsNav) renderChapter(bm.chapterIndex, {silentScroll:true});
+  closeDrawer();
+  setTimeout(()=>{
+    const el = document.querySelector('[data-pid="'+bm.pid+'"]');
+    if(el){
+      el.scrollIntoView({behavior:'smooth', block:'center'});
+      el.classList.add('flash');
+      setTimeout(()=> el.classList.remove('flash'), 1600);
+    }
+  }, needsNav ? 200 : 60);
+}
+function openDrawer(){ $('bookmarksDrawer').classList.add('open'); $('drawerOverlay').classList.add('show'); }
+function closeDrawer(){ $('bookmarksDrawer').classList.remove('open'); $('drawerOverlay').classList.remove('show'); }
 
-  document.addEventListener("contextmenu", (e) => {
+/* زر الحفظ العائم عند تحديد نص */
+function initSelectionBookmark(){
+  const btn = $('selectionBookmarkBtn');
+  let pendingRange = null;
+  function handleSelection(){
+    const sel = window.getSelection();
+    if(!sel || sel.isCollapsed || !sel.toString().trim()){ btn.classList.remove('show'); return; }
+    const anchor = sel.anchorNode;
+    const wrap = anchor && anchor.nodeType===3 ? anchor.parentElement.closest('.p-wrap') : (anchor && anchor.closest && anchor.closest('.p-wrap'));
+    if(!wrap){ btn.classList.remove('show'); return; }
+    pendingRange = { text: sel.toString().trim(), pid: wrap.getAttribute('data-pid') };
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    btn.style.top = Math.max(10, rect.top - 46) + 'px';
+    btn.style.left = Math.max(10, rect.left + rect.width/2 - 70) + 'px';
+    btn.classList.add('show');
+  }
+  document.addEventListener('mouseup', handleSelection);
+  document.addEventListener('touchend', handleSelection);
+  btn.addEventListener('click', ()=>{
+    if(!pendingRange) return;
+    const chapter = getCurrentChapter();
+    addBookmark({
+      type:'excerpt', pid: pendingRange.pid, chapterIndex: state.chapterIndex,
+      chapterTitle: chapter.title, excerpt: pendingRange.text.slice(0,160) + (pendingRange.text.length>160?'…':'')
+    });
+    btn.classList.remove('show');
+    window.getSelection().removeAllRanges();
+  });
+  document.addEventListener('scroll', ()=> btn.classList.remove('show'), {passive:true});
+}
+
+/* ============================================================
+   حماية المحتوى من النسخ (Anti-Copy)
+   ============================================================ */
+function initAntiCopy(){
+  document.addEventListener('contextmenu', e=>{
     e.preventDefault();
-    shieldNote();
+    showToast(t('rightClickBlocked', state.lang));
   });
-
-  document.addEventListener("selectstart", (e) => e.preventDefault());
-  document.addEventListener("dragstart", (e) => e.preventDefault());
-
-  document.addEventListener("copy", (e) => {
+  document.addEventListener('copy', e=>{
+    const sel = window.getSelection().toString();
+    if(!sel) return;
     e.preventDefault();
-    shieldNote();
+    const watermark = '\n\n— for lunch time: '+NOVEL.title+' — '+location.href;
+    e.clipboardData.setData('text/plain', sel + watermark);
+    showToast(t('copyBlocked', state.lang));
   });
-
-  document.addEventListener("cut", (e) => e.preventDefault());
-
-  document.addEventListener("keydown", (e) => {
+  document.addEventListener('keydown', e=>{
     const k = e.key.toLowerCase();
-    const blockedCombo = (e.ctrlKey || e.metaKey) && ["c", "u", "s", "p"].includes(k);
-    if (blockedCombo || k === "f12") {
-      e.preventDefault();
-      shieldNote();
+    if((e.ctrlKey||e.metaKey) && (k==='s' || k==='u')){ e.preventDefault(); showToast(t('rightClickBlocked', state.lang)); }
+    if(k==='f12' || ((e.ctrlKey||e.metaKey) && e.shiftKey && (k==='i'||k==='j'||k==='c'))){
+      e.preventDefault(); showToast(t('devtoolsBlocked', state.lang));
     }
   });
+  document.addEventListener('dragstart', e=>{
+    if(e.target.tagName==='IMG') e.preventDefault();
+  });
+}
 
-  /* ------------------------------------------------------------
-     التنبيهات
-     ------------------------------------------------------------ */
-  let toastTimer = null;
+/* ============================================================
+   لوحات التحكم المنسدلة (لغة / خط / مظهر)
+   ============================================================ */
+function buildControlPanel(containerId, options, currentGetter, onSelect){
+  const panel = $(containerId);
+  panel.innerHTML = '';
+  options.forEach(opt=>{
+    const row = document.createElement('div');
+    row.className = 'control-option' + (currentGetter()===opt.value ? ' active':'');
+    row.innerHTML = '<span>'+opt.label+'</span><span class="dot"></span>';
+    row.addEventListener('click', ()=>{ onSelect(opt.value); });
+    panel.appendChild(row);
+  });
+}
+function initDropdowns(){
+  const groups = ['langControl','fontControl','themeControl'];
+  groups.forEach(id=>{
+    const group = $(id);
+    const trigger = group.querySelector('.control-trigger');
+    trigger.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const willOpen = !group.classList.contains('open');
+      groups.forEach(g=> $(g).classList.remove('open'));
+      if(willOpen) group.classList.add('open');
+    });
+  });
+  document.addEventListener('click', ()=> groups.forEach(g=> $(g).classList.remove('open')));
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') groups.forEach(g=> $(g).classList.remove('open')); });
+}
 
-  function showToast(message) {
-    els.toast.textContent = message;
-    els.toast.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      els.toast.hidden = true;
-    }, 1800);
+function initLangPanel(){
+  const options = [{value:'auto', label:LANG_NAMES.auto}].concat(
+    Object.keys(LANG_NAMES).filter(k=>k!=='auto').map(k=>({value:k, label:LANG_NAMES[k]}))
+  );
+  buildControlPanel('langPanel', options, ()=> state.langIsAuto ? 'auto' : state.lang, async (value)=>{
+    storageSet(CONFIG.storageKeys.lang, value);
+    if(value==='auto'){
+      const {lang} = await detectLanguage();
+      applyLanguage(lang, true, false);
+    } else {
+      applyLanguage(value, false, false);
+    }
+    initLangPanel();
+    $('langControl').classList.remove('open');
+  });
+}
+function initFontPanel(){
+  const options = [
+    {value:'naskh', label:'Noto Naskh'},
+    {value:'cairo', label:'Cairo'},
+    {value:'tajawal', label:'Tajawal'}
+  ];
+  buildControlPanel('fontPanel', options, ()=> document.documentElement.getAttribute('data-font'), (value)=>{
+    document.documentElement.setAttribute('data-font', value);
+    storageSet(CONFIG.storageKeys.font, value);
+    initFontPanel();
+    $('fontControl').classList.remove('open');
+  });
+}
+function initThemePanel(){
+  const options = [
+    {value:'day', label:t('themeDay', state.lang)},
+    {value:'night', label:t('themeNight', state.lang)},
+    {value:'dusk', label:t('themeDusk', state.lang)}
+  ];
+  buildControlPanel('themePanel', options, ()=> document.documentElement.getAttribute('data-theme'), (value)=>{
+    document.documentElement.setAttribute('data-theme', value);
+    storageSet(CONFIG.storageKeys.theme, value);
+    initThemePanel();
+    $('themeControl').classList.remove('open');
+  });
+}
+
+/* ============================================================
+   التنقّل بلوحة المفاتيح
+   ============================================================ */
+function initKeyboardNav(){
+  document.addEventListener('keydown', e=>{
+    const tag = (e.target.tagName||'').toLowerCase();
+    if(tag==='input' || tag==='textarea') return;
+    const dir = document.documentElement.getAttribute('dir');
+    const forwardKey = dir==='rtl' ? 'ArrowLeft' : 'ArrowRight';
+    const backwardKey = dir==='rtl' ? 'ArrowRight' : 'ArrowLeft';
+    if(e.key===forwardKey) goNext();
+    else if(e.key===backwardKey) goPrev();
+  });
+}
+
+/* ============================================================
+   التهيئة الأولية
+   ============================================================ */
+function initToggles(){
+  $('menuToggle').addEventListener('click', openSidebar);
+  $('sidebarClose').addEventListener('click', closeSidebar);
+  $('sidebarOverlay').addEventListener('click', closeSidebar);
+  $('bookmarksToggle').addEventListener('click', openDrawer);
+  $('drawerClose').addEventListener('click', closeDrawer);
+  $('drawerOverlay').addEventListener('click', closeDrawer);
+  $('tocMidBtn').addEventListener('click', openSidebar);
+  $('prevBtn').addEventListener('click', goPrev);
+  $('nextBtn').addEventListener('click', goNext);
+}
+
+function restoreThemeAndFont(){
+  const theme = storageGet(CONFIG.storageKeys.theme, 'night');
+  const font = storageGet(CONFIG.storageKeys.font, 'naskh');
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.setAttribute('data-font', font);
+}
+
+function maybeOfferResume(){
+  const saved = storageGet(CONFIG.storageKeys.progress, null);
+  if(typeof saved === 'number' && saved !== 0){
+    showToast(t('resumeReading', state.lang), {
+      actionLabel: t('resumeAction', state.lang),
+      onAction: ()=> renderChapter(saved, {jump:true}),
+      timeout: 7000
+    });
   }
+}
 
-  /* ------------------------------------------------------------
-     التهيئة
-     ------------------------------------------------------------ */
-  function init() {
-    renderNovelInfo();
-    renderTOC();
-    renderChapter();
-    renderBookmarksPopover();
+async function init(){
+  assignChapterIds();
+  restoreThemeAndFont();
+  loadBookmarks();
+  renderHeroStatic();
+  initToggles();
+  initDropdowns();
+  initFontPanel();
+  initThemePanel();
+  initSelectionBookmark();
+  initAntiCopy();
+  initKeyboardNav();
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', updateProgressBeam);
 
-    setFont(state.font);
-    setFontSize(state.fontSize);
-    setTheme(document.documentElement.getAttribute("data-theme") || state.theme);
-  }
+  renderChapter(0, {silentScroll:true});
+  updateBookmarksBadge();
 
-  document.addEventListener("DOMContentLoaded", init);
+  const {lang, isAuto} = await detectLanguage();
+  await applyLanguage(lang, isAuto, isAuto);
+  initLangPanel();
+
+  maybeOfferResume();
+  updateProgressBeam();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
 })();
