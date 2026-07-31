@@ -1,10 +1,3 @@
-/**
- * app.js
- * ------------------------------------------------------------------
- * "Lunch Time" — front-end application logic.
- * Reads exclusively from window.LUNCH_TIME_DATA (novel-data.js).
- * ------------------------------------------------------------------
- */
 (function () {
   "use strict";
 
@@ -18,12 +11,9 @@
   var state = {
     lang: DATA.meta.defaultLanguage,
     view: "home",
-    chapterId: null,
+    chapterId: null
   };
 
-  /* ------------------------------------------------------------------
-   * Helpers
-   * ------------------------------------------------------------------ */
   function ui() {
     return DATA.ui[state.lang];
   }
@@ -47,9 +37,6 @@
     return svg;
   }
 
-  /* ------------------------------------------------------------------
-   * Rendering
-   * ------------------------------------------------------------------ */
   function renderStaticText() {
     var dict = ui();
     $all("[data-i18n]").forEach(function (el) {
@@ -106,6 +93,13 @@
       li.appendChild(btn);
       listEl.appendChild(li);
     });
+
+    var countLabel = $("#chapterCountLabel");
+    if (countLabel) {
+      countLabel.textContent = DATA.novel.chapters.length === 1
+        ? ui().chapterCount
+        : (DATA.novel.chapters.length + " " + (state.lang === "ar" ? "فصول" : state.lang === "ja" ? "章" : "Chapters"));
+    }
   }
 
   function findChapter(chapterId) {
@@ -141,9 +135,6 @@
     }
   }
 
-  /* ------------------------------------------------------------------
-   * View / navigation
-   * ------------------------------------------------------------------ */
   function switchView(view) {
     state.view = view;
     var home = $("#view-home");
@@ -185,9 +176,6 @@
     renderAll();
   }
 
-  /* ------------------------------------------------------------------
-   * Signature element: ambient reading-progress "breath line"
-   * ------------------------------------------------------------------ */
   function initBreathTracking() {
     var dot = $("#breathDot");
     var frame = $(".reader-frame__inner");
@@ -207,9 +195,6 @@
     update();
   }
 
-  /* ------------------------------------------------------------------
-   * Anti-copy protections
-   * ------------------------------------------------------------------ */
   function initProtections() {
     document.body.classList.add("no-select");
 
@@ -233,12 +218,10 @@
       var key = (e.key || "").toLowerCase();
       var mod = e.ctrlKey || e.metaKey;
 
-      // Ctrl/Cmd + C, U, S, P
       if (mod && !e.shiftKey && (key === "c" || key === "u" || key === "s" || key === "p")) {
         e.preventDefault();
         return;
       }
-      // DevTools: F12, Ctrl/Cmd+Shift+I/J/C
       if (key === "f12") {
         e.preventDefault();
         return;
@@ -249,9 +232,6 @@
     });
   }
 
-  /* ------------------------------------------------------------------
-   * Event wiring
-   * ------------------------------------------------------------------ */
   function initEvents() {
     $all(".lang-switch__btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -276,9 +256,6 @@
     }
   }
 
-  /* ------------------------------------------------------------------
-   * Init
-   * ------------------------------------------------------------------ */
   document.addEventListener("DOMContentLoaded", function () {
     initProtections();
     initEvents();
