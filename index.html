@@ -6,7 +6,6 @@
   <title>Lunch Time — One-Way Reset</title>
   <meta name="description" content="Lunch Time — a premium home for psychological fiction. Read One-Way Reset in Arabic, English, or Japanese." />
 
-  <!-- Typography: display serifs per-language + body sans per-language -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -15,10 +14,11 @@
   />
 
   <link rel="stylesheet" href="style.css" />
+  <script src="novel-data.js" defer></script>
+  <script src="app.js" defer></script>
 </head>
 <body class="lang-en">
 
-  <!-- Inline icon sprite — thin-line, minimalist. No emojis, no icon fonts. -->
   <svg style="display:none" aria-hidden="true">
     <symbol id="icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
       <line x1="4" y1="12" x2="20" y2="12"></line>
@@ -26,7 +26,6 @@
     </symbol>
   </svg>
 
-  <!-- ============================== HEADER ============================== -->
   <header class="site-header ghost-frame">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true"></span>
@@ -46,7 +45,6 @@
   </header>
 
   <main>
-    <!-- ============================== LIBRARY / HOME ============================== -->
     <section id="view-home" class="view">
       <div class="container">
         <div class="hero">
@@ -100,7 +98,6 @@
       </div>
     </section>
 
-    <!-- ============================== READER ============================== -->
     <section id="view-reader" class="view" hidden>
       <div class="container">
         <div class="reader">
@@ -131,13 +128,9 @@
     </section>
   </main>
 
-  <!-- ============================== FOOTER ============================== -->
   <footer class="site-footer">
     <p id="footerBrandLine">Lunch Time — All rights reserved</p>
     <p data-i18n="footerNote">A reading experience built for quiet reflection.</p>
   </footer>
-
-  <script src="novel-data.js"></script>
-  <script src="app.js"></script>
 </body>
 </html>
