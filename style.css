@@ -68,14 +68,7 @@ body {
   font-family: var(--f-body-latin);
   line-height: 1.5;
   background-color: var(--c-bg-fallback);
-  background-image:
-    linear-gradient(180deg, rgba(6, 6, 8, 0.35) 0%, rgba(6, 6, 8, 0.55) 100%),
-    radial-gradient(ellipse at 30% 20%, #14141a 0%, #0a0a0c 55%, #050506 100%),
-    url("https://images.unsplash.com/photo-1506744038136-46273834b3fb");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background: url("https://images.unsplash.com/photo-1506744038136-46273834b3fb") center center / cover no-repeat;
   -webkit-user-drag: none;
 }
 
