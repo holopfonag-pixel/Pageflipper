@@ -1,162 +1,143 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ساعة قبل الفجر</title>
-<meta name="description" content="زوال التفكير اليومي المعتاد." />
-<script src="novel-data.js"></script>
-<script src="script.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-  href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+Arabic:wght@400;500;600&family=Noto+Serif+JP:wght@400;500;600&family=Inter:wght@300;400;500;600&family=Noto+Sans+Arabic:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap"
-  rel="stylesheet"
-/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lunch Time — One-Way Reset</title>
+  <meta name="description" content="Lunch Time — a premium home for psychological fiction. Read One-Way Reset in Arabic, English, or Japanese." />
 
-<link rel="stylesheet" href="style.css" />
+  <!-- Typography: display serifs per-language + body sans per-language -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&family=Noto+Serif+Arabic:wght@500;600;700&family=Noto+Kufi+Arabic:wght@400;500&family=Shippori+Mincho:wght@500;600&family=Noto+Sans+JP:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="lang-en">
 
-  <!-- Full-bleed atmosphere layer. Swap the background-image in style.css
-       ( .atmosphere selector ) for the user's own artwork. -->
-  <div class="atmosphere" aria-hidden="true"></div>
-  <div class="atmosphere__vignette" aria-hidden="true"></div>
+  <!-- Inline icon sprite — thin-line, minimalist. No emojis, no icon fonts. -->
+  <svg style="display:none" aria-hidden="true">
+    <symbol id="icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="4" y1="12" x2="20" y2="12"></line>
+      <polyline points="14 6 20 12 14 18"></polyline>
+    </symbol>
+  </svg>
 
-  <!-- ============ HEADER ============ -->
-  <header class="frame frame--header">
-    <div class="brand" data-view-trigger="home">
-      <span class="brand__glyph" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M6 3H18" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
-          <path d="M6 21H18" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
-          <path d="M7 3C7 8 12 10.5 12 12C12 10.5 17 8 17 3" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M7 21C7 16 12 13.5 12 12C12 13.5 17 16 17 21" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </span>
-      <span class="brand__text">
-        <span class="brand__title serif" data-i18n="meta.title"></span>
-        <span class="brand__tagline" data-i18n="meta.tagline"></span>
-      </span>
+  <!-- ============================== HEADER ============================== -->
+  <header class="site-header ghost-frame">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-word display">Lunch Time</span>
     </div>
 
-    <nav class="nav" aria-label="Primary">
-      <button class="nav__link is-active" data-view="home" data-i18n="ui.navHome"></button>
-      <button class="nav__link" data-view="chapters" data-i18n="ui.navChapters"></button>
-      <button class="nav__link" data-view="about" data-i18n="ui.navAbout"></button>
+    <nav class="main-nav" aria-label="Primary">
+      <a class="main-nav__link" href="#" data-nav="home" data-i18n="navLibrary">Library</a>
+      <a class="main-nav__link" href="#about" data-i18n="navAbout">About</a>
     </nav>
 
     <div class="lang-switch" role="group" aria-label="Language">
-      <button class="lang-switch__btn is-active" data-lang="ar">AR</button>
-      <button class="lang-switch__btn" data-lang="en">EN</button>
-      <button class="lang-switch__btn" data-lang="ja">JA</button>
+      <button class="lang-switch__btn" type="button" data-lang="ar" aria-pressed="false">AR</button>
+      <button class="lang-switch__btn" type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button class="lang-switch__btn" type="button" data-lang="ja" aria-pressed="false">JA</button>
     </div>
   </header>
 
-  <!-- ============ MAIN VIEWS ============ -->
-  <main id="app">
+  <main>
+    <!-- ============================== LIBRARY / HOME ============================== -->
+    <section id="view-home" class="view">
+      <div class="container">
+        <div class="hero">
+          <div class="hero-grid">
 
-    <!-- HOME -->
-    <section class="view is-active" data-view-panel="home">
-      <div class="frame frame--hero">
-        <p class="eyebrow" data-i18n="meta.tagline"></p>
-        <h1 class="hero__title serif" data-i18n="meta.title"></h1>
+            <article class="hero-card ghost-frame">
+              <p class="eyebrow" data-i18n="tagPsychological">Psychological Fiction</p>
 
-        <div class="hero__meta">
-          <span class="meta-pill">
-            <span class="meta-pill__label" data-i18n="ui.authorLabel"></span>
-            <span class="meta-pill__value" data-i18n="meta.author"></span>
-          </span>
-          <span class="meta-pill meta-pill--status">
-            <span class="meta-pill__label" data-i18n="ui.statusLabel"></span>
-            <span class="meta-pill__value" data-i18n="meta.status"></span>
-          </span>
-        </div>
+              <h1 class="novel-title display" id="novelTitle">One-Way Reset — Looking Inside a Different Way</h1>
 
-        <p class="hero__synopsis" data-i18n="meta.synopsis"></p>
+              <div class="novel-byline">
+                <span class="field">
+                  <dt data-i18n="authorLabel">Author</dt>
+                  <dd id="novelAuthor">Zakaria</dd>
+                </span>
+              </div>
 
-        <button class="btn btn--primary" data-view="reader" data-chapter="1">
-          <span data-i18n="ui.startReading"></span>
-          <span class="btn__arrow" aria-hidden="true">→</span>
-        </button>
-      </div>
-    </section>
+              <span class="status-pill">
+                <span class="status-pill__dot" aria-hidden="true"></span>
+                <span data-i18n="statusLabel">Status</span>&nbsp;·&nbsp;<span id="novelStatus">Ongoing</span>
+              </span>
 
-    <!-- CHAPTERS -->
-    <section class="view" data-view-panel="chapters">
-      <div class="frame frame--panel">
-        <h2 class="panel__title serif" data-i18n="ui.chapterListTitle"></h2>
-        <ul class="chapter-list" id="chapter-list"></ul>
-      </div>
-    </section>
+              <p class="novel-synopsis" id="novelSynopsis">
+                The quiet dissolution of ordinary, everyday thought.
+              </p>
 
-    <!-- ABOUT -->
-    <section class="view" data-view-panel="about">
-      <div class="frame frame--panel">
-        <h2 class="panel__title serif" data-i18n="ui.navAbout"></h2>
-        <p class="about__body" data-i18n="ui.aboutBody"></p>
-        <dl class="about__facts">
-          <div class="about__fact">
-            <dt data-i18n="ui.authorLabel"></dt>
-            <dd data-i18n="meta.author"></dd>
-          </div>
-          <div class="about__fact">
-            <dt data-i18n="ui.statusLabel"></dt>
-            <dd data-i18n="meta.status"></dd>
-          </div>
-        </dl>
-      </div>
-    </section>
+              <div class="hero-actions">
+                <button class="btn-primary" type="button" id="beginReadingBtn">
+                  <span data-i18n="beginReading">Begin Reading</span>
+                  <svg><use href="#icon-arrow"></use></svg>
+                </button>
+                <span class="reading-time" data-i18n="readingTime">6 min read</span>
+              </div>
+            </article>
 
-    <!-- READER -->
-    <section class="view" data-view-panel="reader">
-      <div class="frame frame--reader">
-        <div class="reader__toolbar">
-          <button class="reader__back" data-view="chapters">
-            <span class="reader__back-arrow" aria-hidden="true">→</span>
-            <span data-i18n="ui.backToChapters"></span>
-          </button>
+            <aside class="chapter-panel ghost-frame ghost-frame--soft">
+              <div class="panel-heading">
+                <h2 data-i18n="chaptersLabel">Chapters</h2>
+                <span id="chapterCountLabel" data-i18n="chapterCount">1 Chapter</span>
+              </div>
+              <ol class="chapter-list" id="chapterList" aria-label="Chapter list"></ol>
+            </aside>
 
-          <div class="reader__progress" aria-hidden="true">
-            <svg viewBox="0 0 40 40" width="28" height="28">
-              <circle class="progress__track" cx="20" cy="20" r="17" fill="none" stroke-width="1.5"/>
-              <circle id="progress-ring" class="progress__ring" cx="20" cy="20" r="17" fill="none" stroke-width="1.5"/>
-            </svg>
-          </div>
-
-          <div class="reader__font-controls">
-            <button id="font-dec" data-i18n-aria="ui.decreaseFont">A−</button>
-            <button id="font-inc" data-i18n-aria="ui.increaseFont">A+</button>
           </div>
         </div>
 
-        <article class="reader__article">
-          <h1 class="reader__title serif" id="reader-title"></h1>
-          <div class="reader__body" id="reader-body"></div>
-        </article>
-
-        <div class="reader__nav">
-          <button class="btn btn--ghost" id="btn-prev" disabled>
-            <span data-i18n="ui.prevChapter"></span>
-          </button>
-          <button class="btn btn--ghost" id="btn-next" disabled>
-            <span data-i18n="ui.nextChapter"></span>
-          </button>
-        </div>
+        <p id="about" class="reading-time" style="max-width:46ch; padding-bottom:64px; line-height:1.85;">
+          <span class="brand-word" style="font-size:0.95rem;">Lunch Time</span> —
+          <span id="aboutTagline">Psychological fiction, told with quiet luxury.</span>
+        </p>
       </div>
     </section>
 
+    <!-- ============================== READER ============================== -->
+    <section id="view-reader" class="view" hidden>
+      <div class="container">
+        <div class="reader">
+          <div class="reader-topbar">
+            <button class="back-link" type="button" id="backToLibraryBtn">
+              <svg><use href="#icon-arrow"></use></svg>
+              <span data-i18n="backToLibrary">Back to Library</span>
+            </button>
+            <span class="protected-note" data-i18n="protectedNotice">This content is protected. Copying and selection are disabled.</span>
+          </div>
+
+          <article class="reader-frame ghost-frame ghost-frame--strong">
+            <div class="reader-frame__inner">
+              <div class="breath-line" aria-hidden="true"><span class="breath-line__dot" id="breathDot"></span></div>
+
+              <p class="chapter-eyebrow" id="chapterEyebrow">One-Way Reset</p>
+              <h1 class="chapter-title display" id="chapterTitle">Chapter One: An Hour Before Dawn</h1>
+
+              <div class="chapter-body" id="chapterBody"></div>
+
+              <div class="chapter-endmark" aria-hidden="true">
+                <span class="chapter-endmark__glyph"></span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <!-- ============ FOOTER ============ -->
-  <footer class="frame frame--footer">
-    <span class="serif" data-i18n="meta.title"></span>
-    <span class="footer__dot" aria-hidden="true">·</span>
-    <span data-i18n="ui.footerRights"></span>
+  <!-- ============================== FOOTER ============================== -->
+  <footer class="site-footer">
+    <p id="footerBrandLine">Lunch Time — All rights reserved</p>
+    <p data-i18n="footerNote">A reading experience built for quiet reflection.</p>
   </footer>
 
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  
+  <script src="novel-data.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
