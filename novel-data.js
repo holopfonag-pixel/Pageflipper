@@ -1,22 +1,6 @@
-/**
- * novel-data.js
- * ------------------------------------------------------------------
- * "Lunch Time" — protected platform configuration & novel data store.
- *
- * This file is intentionally self-contained and tamper-resistant:
- *   1. The entire data graph is recursively frozen with deepFreeze(),
- *      so nested objects/arrays cannot be mutated at runtime.
- *   2. It is attached to `window` via Object.defineProperty with
- *      writable: false and configurable: false, so it cannot be
- *      reassigned, redefined, or deleted from the console.
- *
- * app.js should only ever READ from window.LUNCH_TIME_DATA.
- * ------------------------------------------------------------------
- */
 (function () {
   "use strict";
 
-  /** Recursively freezes an object graph (objects + arrays). */
   function deepFreeze(value) {
     if (value === null || typeof value !== "object") return value;
     if (Object.isFrozen(value)) return value;
@@ -32,28 +16,22 @@
   }
 
   var DATA = {
-    /* ----------------------------------------------------------------
-     * PLATFORM CONFIGURATION
-     * ---------------------------------------------------------------- */
     meta: {
       brand: "Lunch Time",
       tagline: {
         ar: "قصصٌ نفسية عميقة، بأناقة لا تشبه غيرها.",
         en: "Psychological fiction, told with quiet luxury.",
-        ja: "静かな贅を纏った、心理小説の世界。",
+        ja: "静かな贅を纏った、心理小説の世界。"
       },
       supportedLanguages: ["ar", "en", "ja"],
       defaultLanguage: "en",
       languageMeta: {
         ar: { label: "العربية", dir: "rtl", short: "AR" },
         en: { label: "English", dir: "ltr", short: "EN" },
-        ja: { label: "日本語", dir: "ltr", short: "JA" },
-      },
+        ja: { label: "日本語", dir: "ltr", short: "JA" }
+      }
     },
 
-    /* ----------------------------------------------------------------
-     * UI STRING TRANSLATIONS
-     * ---------------------------------------------------------------- */
     ui: {
       ar: {
         navLibrary: "المكتبة",
@@ -70,7 +48,7 @@
         readingTime: "٦ دقائق قراءة",
         footerNote: "تجربة قراءة صُممت للتأمل الهادئ.",
         footerRights: "جميع الحقوق محفوظة",
-        protectedNotice: "هذا المحتوى محمي. النسخ والتحديد معطّلان.",
+        protectedNotice: "هذا المحتوى محمي. النسخ والتحديد معطّلان."
       },
       en: {
         navLibrary: "Library",
@@ -87,7 +65,7 @@
         readingTime: "6 min read",
         footerNote: "A reading experience built for quiet reflection.",
         footerRights: "All rights reserved",
-        protectedNotice: "This content is protected. Copying and selection are disabled.",
+        protectedNotice: "This content is protected. Copying and selection are disabled."
       },
       ja: {
         navLibrary: "ライブラリ",
@@ -104,13 +82,10 @@
         readingTime: "読了目安 6分",
         footerNote: "静かな内省のために設計された読書体験。",
         footerRights: "全ての権利を保有します",
-        protectedNotice: "本コンテンツは保護されています。コピーおよび選択は無効化されています。",
-      },
+        protectedNotice: "本コンテンツは保護されています。コピーおよび選択は無効化されています。"
+      }
     },
 
-    /* ----------------------------------------------------------------
-     * NOVEL METADATA + CHAPTERS
-     * ---------------------------------------------------------------- */
     novel: {
       slug: "one-way-reset",
       status: "ongoing",
@@ -118,25 +93,25 @@
       title: {
         ar: "إعادة ضبط باتجاه واحد — النظر إلى الداخل من زاوية مختلفة",
         en: "One-Way Reset — Looking Inside a Different Way",
-        ja: "ワンウェイ・リセット ― 違う角度から内側を見つめて",
+        ja: "ワンウェイ・リセット ― 違う角度から内側を見つめて"
       },
 
       author: {
         ar: "زكريا",
         en: "Zakaria",
-        ja: "ザカリア",
+        ja: "ザカリア"
       },
 
       statusLabel: {
         ar: "مستمر",
         en: "Ongoing",
-        ja: "連載中",
+        ja: "連載中"
       },
 
       synopsis: {
         ar: "زوال التفكير اليومي المعتاد.",
         en: "The quiet dissolution of ordinary, everyday thought.",
-        ja: "ありふれた日常的思考が、静かに消えていく物語。",
+        ja: "ありふれた日常的思考が、静かに消えていく物語。"
       },
 
       chapters: [
@@ -146,7 +121,7 @@
           title: {
             ar: "الفصل الأول: ساعة قبل الفجر",
             en: "Chapter One: An Hour Before Dawn",
-            ja: "第一章：夜明け前の一時間",
+            ja: "第一章：夜明け前の一時間"
           },
           paragraphs: {
             ar: [
@@ -159,7 +134,7 @@
               "يكدح الإنسان كل يوم ليحافظ على حياةٍ يرضاها الله له، ويتمسك بعباداته التي خُلق من أجلها؛ دعاءٌ يهمس به في طريقه، أو استغفارٌ يردده بصمت وسط ضجيج الحياة.",
               "نعم… كان الأمر كذلك تمامًا.",
               "يومٌ آخر من السعي، والصبر، والعبادة، والاستمرار.",
-              "لكن… في ذلك اليوم، شعرتُ بشيءٍ لم أعرف كيف أتعامل معه.",
+              "لكن… في ذلك اليوم، شعرتُ بشيءٍ لم أعرف كيف أتعامل معه."
             ],
             en: [
               "Something strange happened… and it is still happening, to this very day.",
@@ -171,7 +146,7 @@
               "Each day, a person toils to preserve a life that God finds pleasing for him, holding fast to the acts of worship for which he was created — a prayer whispered along the way, or words of forgiveness repeated silently amid the noise of life.",
               "Yes… that is exactly how it was.",
               "Another day of striving, of patience, of worship, and of going on.",
-              "But… on that day, I felt something I did not know how to deal with.",
+              "But… on that day, I felt something I did not know how to deal with."
             ],
             ja: [
               "奇妙な出来事が起きた――そして、それは今日に至るまで続いている。",
@@ -183,12 +158,12 @@
               "人は毎日、神が望まれるような人生を守るために働き、自らが創られた目的である礼拝にすがりつく――道すがら小さく唱える祈り、あるいは日々の喧騒の中で静かに繰り返す悔悟の言葉。",
               "そう……まさにその通りだった。",
               "努力と忍耐、礼拝、そして継続の、また一つの日。",
-              "けれど……あの日、私は自分でもどう向き合えばいいのか分からない何かを、確かに感じたのだ。",
-            ],
-          },
-        },
-      ],
-    },
+              "けれど……あの日、私は自分でもどう向き合えばいいのか分からない何かを、確かに感じたのだ。"
+            ]
+          }
+        }
+      ]
+    }
   };
 
   deepFreeze(DATA);
@@ -197,6 +172,6 @@
     value: DATA,
     writable: false,
     configurable: false,
-    enumerable: true,
+    enumerable: true
   });
 })();
