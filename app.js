@@ -191,6 +191,8 @@
     var progressValue = $("#readerProgressValue");
     if (!dot || !frame) return;
 
+    var ticking = false;
+
     function update() {
       if ($("#view-reader").hidden) return;
       var rect = frame.getBoundingClientRect();
@@ -206,8 +208,17 @@
       }
     }
 
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
+    function scheduleUpdate() {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(function () {
+        ticking = false;
+        update();
+      });
+    }
+
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
     update();
   }
 
