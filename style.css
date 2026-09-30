@@ -626,6 +626,18 @@ html[dir="rtl"] .back-link svg {
   margin-bottom: 1.5em;
 }
 
+body.lang-ar .chapter-body p {
+  font-size: 1.12rem;
+  line-height: 2.05;
+  letter-spacing: 0;
+}
+
+body.lang-ja .chapter-body p {
+  font-size: 1.03rem;
+  line-height: 2.05;
+  letter-spacing: 0.025em;
+}
+
 .chapter-body p:first-of-type::first-letter {
   font-family: var(--f-display-latin);
   font-size: 3.4em;
@@ -727,4 +739,12 @@ body.lang-ja .chapter-body p:first-of-type::first-letter {
   .hero {
     padding-block: 40px 28px;
   }
+
+  .reader-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .protected-note { max-width: 34ch; }
 }
