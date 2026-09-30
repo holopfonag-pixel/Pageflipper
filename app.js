@@ -212,40 +212,8 @@
   }
 
   function initProtections() {
-    document.body.classList.add("no-select");
-
-    document.addEventListener("contextmenu", function (e) {
-      e.preventDefault();
-    });
-
-    document.addEventListener("selectstart", function (e) {
-      e.preventDefault();
-    });
-
-    document.addEventListener("dragstart", function (e) {
-      e.preventDefault();
-    });
-
-    document.addEventListener("copy", function (e) {
-      e.preventDefault();
-    });
-
-    document.addEventListener("keydown", function (e) {
-      var key = (e.key || "").toLowerCase();
-      var mod = e.ctrlKey || e.metaKey;
-
-      if (mod && !e.shiftKey && (key === "c" || key === "u" || key === "s" || key === "p")) {
-        e.preventDefault();
-        return;
-      }
-      if (key === "f12") {
-        e.preventDefault();
-        return;
-      }
-      if (mod && e.shiftKey && (key === "i" || key === "j" || key === "c")) {
-        e.preventDefault();
-      }
-    });
+    // Keep native selection, context menus, and keyboard shortcuts available
+    // for accessibility, translation, and assistive reading workflows.
   }
 
   function initEvents() {

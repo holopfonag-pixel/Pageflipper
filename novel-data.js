@@ -49,7 +49,7 @@ ui: {
     readingTime: "٦ دقائق قراءة",
     footerNote: "تجربة قراءة صُممت للتأمل الهادئ.",
     footerRights: "جميع الحقوق محفوظة",
-    protectedNotice: "هذا المحتوى محمي. النسخ والتحديد معطّلان."
+    protectedNotice: "مساحة قراءة هادئة للتأمل والتركيز."
   },
   en: {
     navLibrary: "Library",
@@ -66,7 +66,7 @@ ui: {
     readingTime: "6 min read",
     footerNote: "A reading experience built for quiet reflection.",
     footerRights: "All rights reserved",
-    protectedNotice: "This content is protected. Copying and selection are disabled."
+    protectedNotice: "A quiet reading space for focus and reflection."
   },
   ja: {
     navLibrary: "ライブラリ",
@@ -83,7 +83,7 @@ ui: {
     readingTime: "読了目安 6分",
     footerNote: "静かな内省のために設計された読書体験。",
     footerRights: "全ての権利を保有します",
-    protectedNotice: "本コンテンツは保護されています。コピーおよび選択は無効化されています。"
+    protectedNotice: "集中と内省のための静かな読書空間。"
   }
 },
 
