@@ -1,0 +1,13 @@
+{
+  "name": "pageflipper",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Lunch Time static reading experience",
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate-references.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
