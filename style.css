@@ -81,6 +81,7 @@ body {
     linear-gradient(180deg, rgba(6, 6, 8, 0.22), rgba(6, 6, 8, 0.5)),
     url("assets/background.webp") center center / cover no-repeat;
   -webkit-user-drag: none;
+  font-synthesis: none;
 }
 
 body.no-select,
@@ -702,18 +703,22 @@ html[dir="rtl"] .back-link svg {
   letter-spacing: 0.006em;
   color: var(--c-text);
   margin-bottom: 1.5em;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
 }
 
 body.lang-ar .chapter-body p {
   font-size: calc(1.12rem * var(--reader-scale, 1));
   line-height: 2.05;
   letter-spacing: 0;
+  text-align: start;
 }
 
 body.lang-ja .chapter-body p {
   font-size: calc(1.03rem * var(--reader-scale, 1));
   line-height: 2.05;
   letter-spacing: 0.025em;
+  line-break: strict;
 }
 
 .chapter-body p:first-of-type::first-letter {
