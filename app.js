@@ -158,6 +158,19 @@
       p.textContent = paragraphText;
       body.appendChild(p);
     });
+
+    var chapters = DATA.novel.chapters;
+    var index = chapters.indexOf(chapter);
+    var previous = chapters[index - 1];
+    var next = chapters[index + 1];
+    var previousButton = $("#previousChapterBtn");
+    var nextButton = $("#nextChapterBtn");
+    previousButton.disabled = !previous;
+    nextButton.disabled = !next;
+    $("#previousChapterTitle").textContent = previous ? previous.title[lang] : "";
+    $("#nextChapterTitle").textContent = next ? next.title[lang] : "";
+    previousButton.onclick = previous ? function () { openChapter(previous.id); } : null;
+    nextButton.onclick = next ? function () { openChapter(next.id); } : null;
   }
 
   function renderAll() {
