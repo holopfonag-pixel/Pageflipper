@@ -31,6 +31,27 @@
     return (root || document).querySelector(selector);
   }
 
+  function progressStorageKey(chapterId) {
+    return "lunch-time-progress-" + chapterId;
+  }
+
+  function readChapterProgress(chapterId) {
+    try {
+      var value = Number(window.localStorage.getItem(progressStorageKey(chapterId)));
+      return Number.isFinite(value) ? Math.min(Math.max(value, 0), 1) : 0;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  function saveChapterProgress(chapterId, value) {
+    try {
+      window.localStorage.setItem(progressStorageKey(chapterId), String(value));
+    } catch (error) {
+      // Reading progress is optional when storage is unavailable.
+    }
+  }
+
   function $all(selector, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(selector));
   }
@@ -168,7 +189,12 @@
       window.history.replaceState(null, "", nextHash);
     }
     if (view === "reader") {
-      window.dispatchEvent(new Event("scroll"));
+      window.requestAnimationFrame(function () {
+        var savedProgress = readChapterProgress(state.chapterId);
+        var maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+        window.scrollTo({ top: savedProgress * maxScroll, behavior: "auto" });
+        window.dispatchEvent(new Event("scroll"));
+      });
     }
   }
 
@@ -220,6 +246,7 @@
       var scrolled = Math.min(Math.max(-rect.top, 0), travel);
       var pct = scrolled / travel;
       dot.style.top = (pct * 100).toFixed(2) + "%";
+      if (state.chapterId) saveChapterProgress(state.chapterId, pct);
       if (progressBar && progressValue && progress) {
         var rounded = Math.round(pct * 100);
         progressBar.style.width = rounded + "%";
