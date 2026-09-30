@@ -152,6 +152,9 @@
       home.hidden = false;
     }
     window.scrollTo({ top: 0, behavior: "auto" });
+    if (view === "reader") {
+      window.dispatchEvent(new Event("scroll"));
+    }
   }
 
   function openChapter(chapterId) {
@@ -183,6 +186,9 @@
   function initBreathTracking() {
     var dot = $("#breathDot");
     var frame = $(".reader-frame__inner");
+    var progress = $(".reader-progress");
+    var progressBar = $("#readerProgressBar");
+    var progressValue = $("#readerProgressValue");
     if (!dot || !frame) return;
 
     function update() {
@@ -192,6 +198,12 @@
       var scrolled = Math.min(Math.max(-rect.top, 0), travel);
       var pct = scrolled / travel;
       dot.style.top = (pct * 100).toFixed(2) + "%";
+      if (progressBar && progressValue && progress) {
+        var rounded = Math.round(pct * 100);
+        progressBar.style.width = rounded + "%";
+        progressValue.textContent = rounded + "%";
+        progress.setAttribute("aria-valuenow", String(rounded));
+      }
     }
 
     window.addEventListener("scroll", update, { passive: true });
