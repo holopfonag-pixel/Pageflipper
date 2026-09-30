@@ -24,6 +24,15 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+html[data-reading-theme="warm"] {
+  --c-bg-fallback: #110e0b;
+  --c-text: #eee3d2;
+  --c-text-muted: #c2ad91;
+  --c-text-faint: #927e68;
+  --c-accent: #dec09a;
+  --c-accent-dim: rgba(222, 192, 154, 0.5);
+}
+
 *,
 *::before,
 *::after {

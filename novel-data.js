@@ -53,7 +53,9 @@ ui: {
     previousChapter: "الفصل السابق",
     nextChapter: "الفصل التالي",
     searchChaptersLabel: "البحث في الفصول",
-    searchChaptersPlaceholder: "ابحث في الفصول"
+    searchChaptersPlaceholder: "ابحث في الفصول",
+    warmMode: "الوضع الدافئ",
+    calmMode: "الوضع الهادئ"
   },
   en: {
     navLibrary: "Library",
@@ -74,7 +76,9 @@ ui: {
     previousChapter: "Previous chapter",
     nextChapter: "Next chapter",
     searchChaptersLabel: "Search chapters",
-    searchChaptersPlaceholder: "Search chapters"
+    searchChaptersPlaceholder: "Search chapters",
+    warmMode: "Warm mode",
+    calmMode: "Calm mode"
   },
   ja: {
     navLibrary: "ライブラリ",
@@ -95,7 +99,9 @@ ui: {
     previousChapter: "前の章",
     nextChapter: "次の章",
     searchChaptersLabel: "章を検索",
-    searchChaptersPlaceholder: "章を検索"
+    searchChaptersPlaceholder: "章を検索",
+    warmMode: "暖色モード",
+    calmMode: "静穏モード"
   }
 },
 

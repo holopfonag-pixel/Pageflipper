@@ -43,6 +43,12 @@
     }
   }
 
+  function applyReadingTheme() {
+    document.documentElement.setAttribute("data-reading-theme", warmTheme ? "warm" : "calm");
+    $("#themeToggleBtn").setAttribute("aria-label", warmTheme ? ui().calmMode : ui().warmMode);
+    try { window.localStorage.setItem("lunch-time-reading-theme", warmTheme ? "warm" : "calm"); } catch (error) { /* optional */ }
+  }
+
   function ui() {
     return DATA.ui[state.lang];
   }
@@ -345,6 +351,10 @@
       textScale = Math.min(1.2, textScale + 0.05);
       applyTextScale();
     });
+    $("#themeToggleBtn").addEventListener("click", function () {
+      warmTheme = !warmTheme;
+      applyReadingTheme();
+    });
 
     var libraryNav = $('[data-nav="home"]');
     if (libraryNav) {
@@ -383,6 +393,8 @@
     initBreathTracking();
     setLanguage(state.lang);
     applyTextScale();
+    try { warmTheme = window.localStorage.getItem("lunch-time-reading-theme") === "warm"; } catch (error) { /* optional */ }
+    applyReadingTheme();
     openHashRoute();
 
     if ("serviceWorker" in navigator) {
@@ -392,3 +404,4 @@
     }
   });
 })();
+  var warmTheme = false;
