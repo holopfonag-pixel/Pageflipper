@@ -1,10 +1,10 @@
 :root {
   --c-bg-fallback: #0a0a0c;
-  --c-frame: rgba(12, 12, 14, 0.5);
-  --c-frame-soft: rgba(14, 14, 16, 0.38);
-  --c-frame-strong: rgba(8, 8, 10, 0.62);
-  --c-border: rgba(178, 178, 190, 0.14);
-  --c-border-strong: rgba(200, 200, 212, 0.26);
+  --c-frame: rgba(12, 12, 14, 0.58);
+  --c-frame-soft: rgba(14, 14, 16, 0.46);
+  --c-frame-strong: rgba(8, 8, 10, 0.7);
+  --c-border: rgba(196, 196, 208, 0.18);
+  --c-border-strong: rgba(220, 220, 228, 0.32);
   --c-text: #e4e4e7;
   --c-text-muted: #a7a7b1;
   --c-text-faint: #75757f;
@@ -68,7 +68,9 @@ body {
   font-family: var(--f-body-latin);
   line-height: 1.5;
   background-color: var(--c-bg-fallback);
-  background: url("assets/background.jpg") center center / cover no-repeat;
+  background:
+    linear-gradient(180deg, rgba(6, 6, 8, 0.22), rgba(6, 6, 8, 0.5)),
+    url("assets/background.jpg") center center / cover no-repeat;
   -webkit-user-drag: none;
 }
 
@@ -121,7 +123,7 @@ body.lang-ja .brand-word {
   border-radius: var(--radius-lg);
   -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(115%);
   backdrop-filter: blur(var(--blur-glass)) saturate(115%);
-  box-shadow: 0 20px 60px -25px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 20px 60px -25px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }
 
 .ghost-frame--soft {
