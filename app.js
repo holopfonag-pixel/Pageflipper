@@ -152,6 +152,12 @@
       home.hidden = false;
     }
     window.scrollTo({ top: 0, behavior: "auto" });
+    var nextHash = view === "reader" && state.chapterId
+      ? "#chapter/" + encodeURIComponent(state.chapterId)
+      : "#library";
+    if (window.location.hash !== nextHash) {
+      window.history.replaceState(null, "", nextHash);
+    }
     if (view === "reader") {
       window.dispatchEvent(new Event("scroll"));
     }
@@ -249,6 +255,28 @@
         switchView("home");
       });
     }
+
+    window.addEventListener("hashchange", function () {
+      var match = window.location.hash.match(/^#chapter\/(.+)$/);
+      if (match) {
+        var chapterId = decodeURIComponent(match[1]);
+        if (findChapter(chapterId)) openChapter(chapterId);
+      } else {
+        switchView("home");
+      }
+    });
+  }
+
+  function openHashRoute() {
+    var match = window.location.hash.match(/^#chapter\/(.+)$/);
+    if (match) {
+      var chapterId = decodeURIComponent(match[1]);
+      if (findChapter(chapterId)) {
+        openChapter(chapterId);
+        return;
+      }
+    }
+    switchView("home");
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -256,6 +284,7 @@
     initEvents();
     initBreathTracking();
     setLanguage(state.lang);
+    openHashRoute();
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(function () {

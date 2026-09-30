@@ -31,7 +31,7 @@ for (const match of css.matchAll(/url\(["']?([^"')]+)["']?\)/g)) {
 }
 
 const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]));
-for (const match of app.matchAll(/#([A-Za-z][\w-]*)/g)) {
+for (const match of app.matchAll(/\$\(["']#([A-Za-z][\w-]*)["']\)/g)) {
   assert(ids.has(match[1]) || match[1] === "icon-arrow", `Missing app DOM id: #${match[1]}`);
 }
 
