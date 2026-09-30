@@ -249,6 +249,12 @@
     switchView("reader");
   }
 
+  function moveChapter(offset) {
+    var index = DATA.novel.chapters.findIndex(function (chapter) { return chapter.id === state.chapterId; });
+    var target = DATA.novel.chapters[index + offset];
+    if (target) openChapter(target.id);
+  }
+
   function setLanguage(lang) {
     if (DATA.meta.supportedLanguages.indexOf(lang) === -1) return;
 
@@ -372,6 +378,14 @@
       } else {
         switchView("home");
       }
+    });
+
+    document.addEventListener("keydown", function (event) {
+      var tag = (event.target.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || event.target.isContentEditable) return;
+      if (event.key === "Escape" && state.view === "reader") switchView("home");
+      if (state.view === "reader" && event.key === "ArrowRight") moveChapter(1);
+      if (state.view === "reader" && event.key === "ArrowLeft") moveChapter(-1);
     });
   }
 
