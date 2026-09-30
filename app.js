@@ -126,7 +126,13 @@
     $("#novelSynopsis").textContent = novel.synopsis[lang];
     $("#aboutTagline").textContent = DATA.meta.tagline[lang];
     $("#footerBrandLine").textContent = DATA.meta.brand + " \u2014 " + dict.footerRights;
-    document.title = DATA.meta.brand + " \u2014 " + novel.title[lang];
+    document.title = DATA.meta.brand + " — " + novel.title[lang];
+    var description = novel.synopsis[lang];
+    document.querySelector('meta[name="description"]').setAttribute("content", description);
+    document.querySelector('meta[property="og:title"]').setAttribute("content", document.title);
+    document.querySelector('meta[property="og:description"]').setAttribute("content", description);
+    document.querySelector('meta[name="twitter:title"]').setAttribute("content", document.title);
+    document.querySelector('meta[name="twitter:description"]').setAttribute("content", description);
   }
 
   function renderChapterList() {
