@@ -184,6 +184,16 @@
     return chapters[0];
   }
 
+  function validateRuntimeData() {
+    var languages = DATA.meta.supportedLanguages;
+    if (!Array.isArray(languages) || !languages.length || !Array.isArray(DATA.novel.chapters)) return false;
+    return languages.every(function (language) {
+      return DATA.ui[language] && DATA.novel.title[language] && DATA.novel.chapters.every(function (chapter) {
+        return chapter.title[language] && Array.isArray(chapter.paragraphs[language]);
+      });
+    });
+  }
+
   function renderReader() {
     var chapter = findChapter(state.chapterId);
     var lang = state.lang;
@@ -410,6 +420,13 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    if (!validateRuntimeData()) {
+      var status = $("#appStatus");
+      status.textContent = "The reader data is incomplete. Please refresh and try again.";
+      status.hidden = false;
+      status.classList.add("app-status--visible");
+      return;
+    }
     initProtections();
     initEvents();
     initBreathTracking();
