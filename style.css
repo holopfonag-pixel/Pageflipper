@@ -246,7 +246,7 @@ body.lang-ja .brand-word {
   padding: clamp(32px, 5vw, 56px);
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 24px;
 }
 
 .eyebrow {
@@ -267,9 +267,10 @@ body.lang-ja .brand-word {
 }
 
 .novel-title {
-  font-size: clamp(2.1rem, 4.4vw, 3.4rem);
+  max-width: 15ch;
+  font-size: clamp(2.25rem, 4.8vw, 3.7rem);
   font-weight: 600;
-  line-height: 1.16;
+  line-height: 1.12;
   letter-spacing: 0.005em;
   color: var(--c-text);
 }
@@ -316,10 +317,10 @@ body.lang-ja .brand-word {
 }
 
 .novel-synopsis {
-  font-size: 1.02rem;
-  line-height: 1.85;
+  max-width: 42ch;
+  font-size: 1.04rem;
+  line-height: 1.9;
   color: var(--c-text-muted);
-  max-width: 46ch;
 }
 
 .hero-actions {
