@@ -256,5 +256,11 @@
     initEvents();
     initBreathTracking();
     setLanguage(state.lang);
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(function () {
+        // Offline caching is an enhancement; the reader remains fully usable without it.
+      });
+    }
   });
 })();
