@@ -251,6 +251,7 @@ body.lang-ja .brand-word {
 
 .hero-card__cover {
   position: relative;
+  contain: paint;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -729,6 +730,11 @@ body.lang-ja .chapter-body p:first-of-type::first-letter {
 }
 
 @media (max-width: 640px) {
+  .ghost-frame {
+    -webkit-backdrop-filter: blur(12px) saturate(110%);
+    backdrop-filter: blur(12px) saturate(110%);
+  }
+
   .site-header {
     flex-wrap: wrap;
     gap: 12px 16px;
