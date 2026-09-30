@@ -478,6 +478,16 @@ html[dir="rtl"] .btn-primary svg {
   background: rgba(255, 255, 255, 0.035);
 }
 
+.chapter-item.is-active {
+  background: rgba(220, 220, 228, 0.09);
+  box-shadow: inset 2px 0 0 var(--c-accent);
+}
+
+.chapter-item.is-active .chapter-item__number,
+.chapter-item.is-active .chapter-item__title {
+  color: var(--c-text);
+}
+
 .chapter-item__number {
   font-family: var(--f-display-latin);
   font-size: 1.3rem;

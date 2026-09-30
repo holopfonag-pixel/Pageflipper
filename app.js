@@ -72,6 +72,10 @@
       btn.type = "button";
       btn.className = "chapter-item";
       btn.setAttribute("data-chapter-id", chapter.id);
+      if (state.chapterId === chapter.id) {
+        btn.classList.add("is-active");
+        btn.setAttribute("aria-current", "page");
+      }
 
       var number = document.createElement("span");
       number.className = "chapter-item__number";
