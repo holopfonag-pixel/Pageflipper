@@ -40,12 +40,12 @@
       <span class="brand-word display">Lunch Time</span>
     </div>
 
-    <nav class="main-nav" aria-label="Primary">
+    <nav class="main-nav" aria-label="Primary navigation">
       <a class="main-nav__link" href="#" data-nav="home" data-i18n="navLibrary">Library</a>
       <a class="main-nav__link" href="#about" data-i18n="navAbout">About</a>
     </nav>
 
-    <div class="lang-switch" role="group" aria-label="Language">
+    <div class="lang-switch" role="group" aria-label="Language selection">
       <button class="lang-switch__btn" type="button" data-lang="ar" aria-pressed="false">AR</button>
       <button class="lang-switch__btn" type="button" data-lang="en" aria-pressed="true">EN</button>
       <button class="lang-switch__btn" type="button" data-lang="ja" aria-pressed="false">JA</button>
@@ -67,12 +67,12 @@
 
               <h1 class="novel-title display" id="novelTitle">One-Way Reset — Looking Inside a Different Way</h1>
 
-              <div class="novel-byline">
-                <span class="field">
+              <dl class="novel-byline">
+                <div class="field">
                   <dt data-i18n="authorLabel">Author</dt>
                   <dd id="novelAuthor">Zakaria</dd>
-                </span>
-              </div>
+                </div>
+              </dl>
 
               <span class="status-pill">
                 <span class="status-pill__dot" aria-hidden="true"></span>
@@ -84,7 +84,7 @@
               </p>
 
               <div class="hero-actions">
-                <button class="btn-primary" type="button" id="beginReadingBtn">
+                <button class="btn-primary" type="button" id="beginReadingBtn" aria-controls="view-reader">
                   <span data-i18n="beginReading">Begin Reading</span>
                   <svg><use href="#icon-arrow"></use></svg>
                 </button>
@@ -125,7 +125,7 @@
               <span class="protected-note" data-i18n="protectedNotice">A quiet reading space for focus and reflection.</span>
           </div>
 
-          <article class="reader-frame ghost-frame ghost-frame--strong">
+            <article class="reader-frame ghost-frame ghost-frame--strong" aria-labelledby="chapterTitle">
             <div class="reader-frame__inner">
               <div class="breath-line" aria-hidden="true"><span class="breath-line__dot" id="breathDot"></span></div>
 
