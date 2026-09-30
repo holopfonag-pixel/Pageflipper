@@ -1,0 +1,12 @@
+{
+  "name": "Lunch Time — One-Way Reset",
+  "short_name": "Lunch Time",
+  "description": "A quiet home for psychological fiction.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0a0a0c"
+}
