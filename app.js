@@ -17,12 +17,31 @@
     }
   }
 
+  function readStoredTextScale() {
+    try {
+      var value = Number(window.localStorage.getItem("lunch-time-text-scale"));
+      return Number.isFinite(value) ? Math.min(Math.max(value, 0.9), 1.2) : 1;
+    } catch (error) {
+      return 1;
+    }
+  }
+
   var state = {
     lang: readStoredLanguage(),
     view: "home",
     chapterId: null,
     searchQuery: ""
   };
+  var textScale = readStoredTextScale();
+
+  function applyTextScale() {
+    document.documentElement.style.setProperty("--reader-scale", textScale.toFixed(2));
+    try {
+      window.localStorage.setItem("lunch-time-text-scale", String(textScale));
+    } catch (error) {
+      // Text size remains usable when storage is unavailable.
+    }
+  }
 
   function ui() {
     return DATA.ui[state.lang];
@@ -314,6 +333,19 @@
       renderChapterList();
     });
 
+    $("#decreaseTextBtn").addEventListener("click", function () {
+      textScale = Math.max(0.9, textScale - 0.05);
+      applyTextScale();
+    });
+    $("#resetTextBtn").addEventListener("click", function () {
+      textScale = 1;
+      applyTextScale();
+    });
+    $("#increaseTextBtn").addEventListener("click", function () {
+      textScale = Math.min(1.2, textScale + 0.05);
+      applyTextScale();
+    });
+
     var libraryNav = $('[data-nav="home"]');
     if (libraryNav) {
       libraryNav.addEventListener("click", function (e) {
@@ -350,6 +382,7 @@
     initEvents();
     initBreathTracking();
     setLanguage(state.lang);
+    applyTextScale();
     openHashRoute();
 
     if ("serviceWorker" in navigator) {

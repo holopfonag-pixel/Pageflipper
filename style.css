@@ -574,6 +574,24 @@ html[dir="rtl"] .chapter-item__arrow {
   transition: width 0.18s linear;
 }
 
+.reading-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+}
+.reading-settings button {
+  min-width: 29px;
+  min-height: 28px;
+  border-radius: 2px;
+  color: var(--c-text-faint);
+  font-size: 0.7rem;
+}
+.reading-settings button:hover,
+.reading-settings button:focus-visible { color: var(--c-text); background: rgba(255, 255, 255, 0.06); }
+
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -670,7 +688,7 @@ html[dir="rtl"] .back-link svg {
 }
 
 .chapter-body p {
-  font-size: 1.08rem;
+  font-size: calc(1.08rem * var(--reader-scale, 1));
   line-height: 1.95;
   letter-spacing: 0.006em;
   color: var(--c-text);
@@ -678,13 +696,13 @@ html[dir="rtl"] .back-link svg {
 }
 
 body.lang-ar .chapter-body p {
-  font-size: 1.12rem;
+  font-size: calc(1.12rem * var(--reader-scale, 1));
   line-height: 2.05;
   letter-spacing: 0;
 }
 
 body.lang-ja .chapter-body p {
-  font-size: 1.03rem;
+  font-size: calc(1.03rem * var(--reader-scale, 1));
   line-height: 2.05;
   letter-spacing: 0.025em;
 }
