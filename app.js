@@ -5,6 +5,14 @@
 
   if (!DATA) {
     console.error("Lunch Time: novel-data.js failed to load.");
+    document.addEventListener("DOMContentLoaded", function () {
+      var status = document.querySelector("#appStatus");
+      if (status) {
+        status.textContent = "The reader could not load its content. Please refresh and try again.";
+        status.hidden = false;
+        status.classList.add("app-status--visible");
+      }
+    });
     return;
   }
 
