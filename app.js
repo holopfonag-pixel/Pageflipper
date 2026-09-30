@@ -8,8 +8,17 @@
     return;
   }
 
+  function readStoredLanguage() {
+    try {
+      var stored = window.localStorage.getItem("lunch-time-language");
+      return DATA.meta.supportedLanguages.indexOf(stored) !== -1 ? stored : DATA.meta.defaultLanguage;
+    } catch (error) {
+      return DATA.meta.defaultLanguage;
+    }
+  }
+
   var state = {
-    lang: DATA.meta.defaultLanguage,
+    lang: readStoredLanguage(),
     view: "home",
     chapterId: null
   };
@@ -173,6 +182,11 @@
     if (DATA.meta.supportedLanguages.indexOf(lang) === -1) return;
 
     state.lang = lang;
+    try {
+      window.localStorage.setItem("lunch-time-language", lang);
+    } catch (error) {
+      // Preferences remain optional when storage is unavailable.
+    }
     var langMeta = DATA.meta.languageMeta[lang];
 
     document.documentElement.setAttribute("lang", lang);
