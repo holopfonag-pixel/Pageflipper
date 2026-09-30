@@ -279,6 +279,16 @@
     if (target) openChapter(target.id);
   }
 
+  function shareCurrentChapter() {
+    var chapter = findChapter(state.chapterId);
+    var shareData = { title: chapter.title[state.lang], text: DATA.novel.title[state.lang], url: window.location.href };
+    if (navigator.share) {
+      navigator.share(shareData).catch(function () {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+    }
+  }
+
   function setLanguage(lang) {
     if (DATA.meta.supportedLanguages.indexOf(lang) === -1) return;
 
@@ -385,6 +395,7 @@
       warmTheme = !warmTheme;
       applyReadingTheme();
     });
+    $("#shareChapterBtn").addEventListener("click", shareCurrentChapter);
 
     var libraryNav = $('[data-nav="home"]');
     if (libraryNav) {

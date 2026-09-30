@@ -55,7 +55,8 @@ ui: {
     searchChaptersLabel: "البحث في الفصول",
     searchChaptersPlaceholder: "ابحث في الفصول",
     warmMode: "الوضع الدافئ",
-    calmMode: "الوضع الهادئ"
+    calmMode: "الوضع الهادئ",
+    shareChapter: "مشاركة الفصل"
   },
   en: {
     navLibrary: "Library",
@@ -78,7 +79,8 @@ ui: {
     searchChaptersLabel: "Search chapters",
     searchChaptersPlaceholder: "Search chapters",
     warmMode: "Warm mode",
-    calmMode: "Calm mode"
+    calmMode: "Calm mode",
+    shareChapter: "Share chapter"
   },
   ja: {
     navLibrary: "ライブラリ",
@@ -101,7 +103,8 @@ ui: {
     searchChaptersLabel: "章を検索",
     searchChaptersPlaceholder: "章を検索",
     warmMode: "暖色モード",
-    calmMode: "静穏モード"
+    calmMode: "静穏モード",
+    shareChapter: "章を共有"
   }
 },
 
