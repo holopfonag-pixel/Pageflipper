@@ -20,7 +20,8 @@
   var state = {
     lang: readStoredLanguage(),
     view: "home",
-    chapterId: null
+    chapterId: null,
+    searchQuery: ""
   };
 
   function ui() {
@@ -75,6 +76,10 @@
         el.textContent = dict[key];
       }
     });
+    $all("[data-i18n-placeholder]").forEach(function (el) {
+      var key = el.getAttribute("data-i18n-placeholder");
+      if (Object.prototype.hasOwnProperty.call(dict, key)) el.setAttribute("placeholder", dict[key]);
+    });
   }
 
   function renderNovelMeta() {
@@ -97,6 +102,8 @@
     listEl.innerHTML = "";
 
     DATA.novel.chapters.forEach(function (chapter) {
+      var titleText = chapter.title[lang];
+      if (state.searchQuery && titleText.toLocaleLowerCase().indexOf(state.searchQuery.toLocaleLowerCase()) === -1) return;
       var li = document.createElement("li");
       var btn = document.createElement("button");
       btn.type = "button";
@@ -113,7 +120,7 @@
 
       var title = document.createElement("span");
       title.className = "chapter-item__title";
-      title.textContent = chapter.title[lang];
+      title.textContent = titleText;
 
       var arrow = makeArrowIcon("chapter-item__arrow");
 
@@ -300,6 +307,11 @@
 
     $("#backToLibraryBtn").addEventListener("click", function () {
       switchView("home");
+    });
+
+    $("#chapterSearch").addEventListener("input", function (event) {
+      state.searchQuery = event.target.value.trim();
+      renderChapterList();
     });
 
     var libraryNav = $('[data-nav="home"]');

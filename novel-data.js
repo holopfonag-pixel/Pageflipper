@@ -51,7 +51,9 @@ ui: {
     footerRights: "جميع الحقوق محفوظة",
     protectedNotice: "مساحة قراءة هادئة للتأمل والتركيز.",
     previousChapter: "الفصل السابق",
-    nextChapter: "الفصل التالي"
+    nextChapter: "الفصل التالي",
+    searchChaptersLabel: "البحث في الفصول",
+    searchChaptersPlaceholder: "ابحث في الفصول"
   },
   en: {
     navLibrary: "Library",
@@ -70,7 +72,9 @@ ui: {
     footerRights: "All rights reserved",
     protectedNotice: "A quiet reading space for focus and reflection.",
     previousChapter: "Previous chapter",
-    nextChapter: "Next chapter"
+    nextChapter: "Next chapter",
+    searchChaptersLabel: "Search chapters",
+    searchChaptersPlaceholder: "Search chapters"
   },
   ja: {
     navLibrary: "ライブラリ",
@@ -89,7 +93,9 @@ ui: {
     footerRights: "全ての権利を保有します",
     protectedNotice: "集中と内省のための静かな読書空間。",
     previousChapter: "前の章",
-    nextChapter: "次の章"
+    nextChapter: "次の章",
+    searchChaptersLabel: "章を検索",
+    searchChaptersPlaceholder: "章を検索"
   }
 },
 
