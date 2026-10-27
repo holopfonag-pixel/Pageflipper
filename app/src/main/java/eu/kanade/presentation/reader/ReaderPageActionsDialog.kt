@@ -31,6 +31,7 @@ fun ReaderPageActionsDialog(
     onSetAsCover: () -> Unit,
     onShare: (Boolean) -> Unit,
     onSave: () -> Unit,
+    onAddToStack: () -> Unit,
 ) {
     var showSetCoverDialog by remember { mutableStateOf(false) }
 
@@ -69,6 +70,15 @@ fun ReaderPageActionsDialog(
                 icon = MaterialSymbols.Rounded.Save,
                 onClick = {
                     onSave()
+                    onDismissRequest()
+                },
+            )
+            ActionButton(
+                modifier = Modifier.weight(1f),
+                title = "Add to stack",
+                icon = MaterialSymbols.Rounded.Save,
+                onClick = {
+                    onAddToStack()
                     onDismissRequest()
                 },
             )

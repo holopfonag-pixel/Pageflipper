@@ -127,6 +127,7 @@ class ReaderViewModel(
     private val coverCache: CoverCache,
     private val chapterCache: ChapterCache,
     private val downloadCache: DownloadCache,
+    private val pageStackManager: PageStackManager,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -924,6 +925,23 @@ class ReaderViewModel(
         mutableState.update { it.copy(dialog = Dialog.PageActions(page)) }
     }
 
+    fun addCurrentPageToStack() {
+        val page = (state.value.dialog as? Dialog.PageActions)?.page
+        val manga = manga ?: return
+        if (page?.status != Page.State.Ready) return
+        viewModelScope.launch {
+            runCatching {
+                pageStackManager.addPage(
+                    stream = page.stream!!,
+                    sourceTitle = manga.title,
+                    sourceChapter = page.chapter.chapter.name,
+                    pageNumber = page.number,
+                )
+            }.onSuccess { eventChannel.send(Event.PageStackAdded) }
+                .onFailure { eventChannel.send(Event.PageStackError) }
+        }
+    }
+
     fun openSettingsDialog() {
         mutableState.update { it.copy(dialog = Dialog.Settings) }
     }
@@ -1120,6 +1138,8 @@ class ReaderViewModel(
         data class SavedImage(val result: SaveImageResult) : Event
         data class ShareImage(val uri: Uri, val page: ReaderPage) : Event
         data class CopyImage(val uri: Uri) : Event
+        data object PageStackAdded : Event
+        data object PageStackError : Event
     }
 }
 

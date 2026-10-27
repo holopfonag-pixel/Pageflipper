@@ -317,6 +317,7 @@ class ReaderActivity : BaseActivity() {
                         onSetAsCover = viewModel::setAsCover,
                         onShare = viewModel::shareImage,
                         onSave = viewModel::saveImage,
+                        onAddToStack = viewModel::addCurrentPageToStack,
                     )
                 }
                 null -> {}
@@ -387,6 +388,8 @@ class ReaderActivity : BaseActivity() {
                     is ReaderViewModel.Event.SetCoverResult -> {
                         onSetAsCoverResult(event.result)
                     }
+                    ReaderViewModel.Event.PageStackAdded -> toast("Page added to stack")
+                    ReaderViewModel.Event.PageStackError -> toast("Unable to add page to stack")
                 }
             }
             .launchIn(lifecycleScope)
@@ -566,6 +569,7 @@ class ReaderActivity : BaseActivity() {
             onOpenInWebView = ::openChapterInWebView.takeIf { isHttpSource },
             onOpenInBrowser = ::openChapterInBrowser.takeIf { isHttpSource },
             onShare = ::shareChapter.takeIf { isHttpSource },
+            onOpenPageStack = ::openPageStack,
 
             chapterNavigatorType = if (!verticalNavigator) {
                 if (readingMode == ReadingMode.RIGHT_TO_LEFT) {
@@ -611,6 +615,10 @@ class ReaderActivity : BaseActivity() {
             },
             onClickSettings = viewModel::openSettingsDialog,
         )
+    }
+
+    private fun openPageStack() {
+        startActivity(Intent(this, MainActivity::class.java).apply { action = MainActivity.INTENT_PAGE_STACK })
     }
 
     /**

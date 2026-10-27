@@ -35,6 +35,7 @@ import eu.kanade.tachiyomi.network.NetworkPreferences
 import eu.kanade.tachiyomi.ui.base.delegate.SecureActivityDelegateImpl
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
+import eu.kanade.tachiyomi.ui.reader.PageStackManager
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
 import eu.kanade.tachiyomi.ui.setting.track.BaseOAuthLoginActivity
 import eu.kanade.tachiyomi.ui.webview.WebViewActivity
@@ -109,6 +110,7 @@ interface AppGraph : ViewModelGraph {
     val chapterCache: ChapterCache
     val coverCache: CoverCache
     val downloadCache: DownloadCache
+    val pageStackManager: PageStackManager
 
     val json: Json
     val protoBuf: ProtoBuf

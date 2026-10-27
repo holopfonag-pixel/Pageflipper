@@ -21,6 +21,7 @@ fun ReaderTopBar(
     onOpenInWebView: (() -> Unit)?,
     onOpenInBrowser: (() -> Unit)?,
     onShare: (() -> Unit)?,
+    onOpenPageStack: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     AppBar(
@@ -69,6 +70,14 @@ fun ReaderTopBar(
                         add(
                             AppBar.OverflowAction(
                                 title = stringResource(MR.strings.action_share),
+                                onClick = it,
+                            ),
+                        )
+                    }
+                    onOpenPageStack?.let {
+                        add(
+                            AppBar.OverflowAction(
+                                title = "Page stack",
                                 onClick = it,
                             ),
                         )
