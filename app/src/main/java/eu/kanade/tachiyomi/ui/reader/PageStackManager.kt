@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.chapter.repository.ChapterRepository
@@ -42,6 +44,7 @@ class PageStackManager(
 
     private val _items = MutableStateFlow(loadItems())
     val items: StateFlow<List<PageStackItem>> = _items.asStateFlow()
+    private val mutationMutex = Mutex()
 
     fun uriFor(item: PageStackItem): String = stackDir?.findFile(item.fileName)?.uri.toString()
 
@@ -51,38 +54,46 @@ class PageStackManager(
         sourceChapter: String,
         pageNumber: Int,
     ) = withContext(Dispatchers.IO) {
-        val directory = stackDir ?: error("Unable to open page stack directory")
-        val id = (_items.value.maxOfOrNull { it.id } ?: 0) + 1
-        val fileName = "page_${id.toString().padStart(6, '0')}.jpg"
-        directory.createFile(fileName)?.openOutputStream()?.use { output ->
-            stream().use { input -> input.copyTo(output) }
-        } ?: error("Unable to save stacked page")
-        val next = _items.value + PageStackItem(id, fileName, sourceTitle, sourceChapter, pageNumber)
-        saveItems(next)
-        _items.value = next
+        mutationMutex.withLock {
+            val directory = stackDir ?: error("Unable to open page stack directory")
+            val id = (_items.value.maxOfOrNull { it.id } ?: 0) + 1
+            val fileName = "page_${id.toString().padStart(6, '0')}.jpg"
+            directory.createFile(fileName)?.openOutputStream()?.use { output ->
+                stream().use { input -> input.copyTo(output) }
+            } ?: error("Unable to save stacked page")
+            val next = _items.value + PageStackItem(id, fileName, sourceTitle, sourceChapter, pageNumber)
+            saveItems(next)
+            _items.value = next
+        }
     }
 
     suspend fun remove(id: Int) = withContext(Dispatchers.IO) {
-        val current = _items.value
-        current.firstOrNull { it.id == id }?.let { stackDir?.findFile(it.fileName)?.delete() }
-        val next = current.filterNot { it.id == id }
-        saveItems(next)
-        _items.value = next
+        mutationMutex.withLock {
+            val current = _items.value
+            current.firstOrNull { it.id == id }?.let { stackDir?.findFile(it.fileName)?.delete() }
+            val next = current.filterNot { it.id == id }
+            saveItems(next)
+            _items.value = next
+        }
     }
 
     suspend fun move(id: Int, offset: Int) = withContext(Dispatchers.IO) {
-        val index = _items.value.indexOfFirst { it.id == id }
-        val target = index + offset
-        if (index < 0 || target !in _items.value.indices) return@withContext
-        val next = _items.value.toMutableList().apply { add(target, removeAt(index)) }
-        saveItems(next)
-        _items.value = next
+        mutationMutex.withLock {
+            val index = _items.value.indexOfFirst { it.id == id }
+            val target = index + offset
+            if (index < 0 || target !in _items.value.indices) return@withLock
+            val next = _items.value.toMutableList().apply { add(target, removeAt(index)) }
+            saveItems(next)
+            _items.value = next
+        }
     }
 
     suspend fun clear() = withContext(Dispatchers.IO) {
-        stackDir?.listFiles()?.forEach { it.delete() }
-        saveItems(emptyList())
-        _items.value = emptyList()
+        mutationMutex.withLock {
+            stackDir?.listFiles()?.forEach { it.delete() }
+            saveItems(emptyList())
+            _items.value = emptyList()
+        }
     }
 
     suspend fun createLocalManga(title: String, chapterTitle: String, coverId: Int? = null): Manga = withContext(Dispatchers.IO) {
@@ -134,7 +145,9 @@ class PageStackManager(
             ),
             updated = emptyList(),
         )
-        clear()
+        // Remove only the pages that were included in this saved work. Pages added while the
+        // copy was running must remain in the user's current stack.
+        ordered.forEach { remove(it.id) }
         inserted
     }
 
@@ -152,8 +165,10 @@ class PageStackManager(
     }
 
     private fun saveItems(items: List<PageStackItem>) {
-        val directory = stackDir ?: return
-        val file = directory.createFile(INDEX_FILE) ?: return
+        val directory = stackDir ?: error("Unable to open page stack directory")
+        val file = directory.findFile(INDEX_FILE)?.also {
+            check(it.delete()) { "Unable to replace page stack index" }
+        } ?: directory.createFile(INDEX_FILE) ?: error("Unable to save page stack index")
         file.openOutputStream().bufferedWriter().use { out ->
             items.forEach { item ->
                 out.appendLine(listOf(item.id, item.fileName, encode(item.sourceTitle), encode(item.sourceChapter), item.pageNumber).joinToString("\t"))

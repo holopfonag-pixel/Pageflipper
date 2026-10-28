@@ -197,6 +197,7 @@ class ReaderViewModel(
 
     // Serializes the progress writes, which outlive the reader, so they are applied in order
     private val progressWrites = Mutex()
+    private val pageStackWrite = Mutex()
 
     // Set on Main, flushed from the chapter load too
     @Volatile
@@ -930,15 +931,22 @@ class ReaderViewModel(
         val manga = manga ?: return
         if (page?.status != Page.State.Ready) return
         viewModelScope.launch {
-            runCatching {
-                pageStackManager.addPage(
-                    stream = page.stream!!,
-                    sourceTitle = manga.title,
-                    sourceChapter = page.chapter.chapter.name,
-                    pageNumber = page.number,
-                )
-            }.onSuccess { eventChannel.send(Event.PageStackAdded) }
-                .onFailure { eventChannel.send(Event.PageStackError) }
+            if (!pageStackWrite.tryLock()) return@launch
+            try {
+                runCatching {
+                    pageStackManager.addPage(
+                        stream = page.stream!!,
+                        sourceTitle = manga.title,
+                        sourceChapter = page.chapter.chapter.name,
+                        pageNumber = page.number,
+                    )
+                }.onSuccess {
+                    closeDialog()
+                    eventChannel.send(Event.PageStackAdded)
+                }.onFailure { eventChannel.send(Event.PageStackError) }
+            } finally {
+                pageStackWrite.unlock()
+            }
         }
     }
 

@@ -47,6 +47,9 @@ class PageStackScreen : Screen() {
         var title by remember { mutableStateOf("") }
         var chapter by remember { mutableStateOf("Collected pages") }
         var coverId by remember { mutableStateOf<Int?>(null) }
+        var isSaving by remember { mutableStateOf(false) }
+        var saveError by remember { mutableStateOf<String?>(null) }
+        var showClearDialog by remember { mutableStateOf(false) }
 
         Scaffold(
             topBar = {
@@ -90,7 +93,7 @@ class PageStackScreen : Screen() {
                         }
                     }
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = { scope.launch { manager.clear() } }) { Text("Clear") }
+                        TextButton(onClick = { showClearDialog = true }) { Text("Clear") }
                         Button(onClick = { showSaveDialog = true }, modifier = Modifier.weight(1f)) {
                             Text("Save as work")
                         }
@@ -107,6 +110,7 @@ class PageStackScreen : Screen() {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Work name") })
                         OutlinedTextField(value = chapter, onValueChange = { chapter = it }, label = { Text("Chapter name") })
+                        saveError?.let { Text(it) }
                         Text("Cover (first page by default)")
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             items.forEach { item ->
@@ -118,14 +122,35 @@ class PageStackScreen : Screen() {
                     }
                 },
                 confirmButton = {
-                    TextButton(enabled = title.isNotBlank(), onClick = {
+                    TextButton(enabled = title.isNotBlank() && !isSaving, onClick = {
+                        isSaving = true
+                        saveError = null
                         scope.launch {
                             runCatching { manager.createLocalManga(title, chapter, coverId) }
                                 .onSuccess { showSaveDialog = false; navigator.pop() }
+                                .onFailure {
+                                    isSaving = false
+                                    saveError = "Unable to save the stack."
+                                }
                         }
                     }) { Text("Save") }
                 },
                 dismissButton = { TextButton(onClick = { showSaveDialog = false }) { Text("Cancel") } },
+            )
+        }
+
+        if (showClearDialog) {
+            AlertDialog(
+                onDismissRequest = { showClearDialog = false },
+                title = { Text("Clear page stack?") },
+                text = { Text("All stacked pages will be removed.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showClearDialog = false
+                        scope.launch { manager.clear() }
+                    }) { Text("Clear") }
+                },
+                dismissButton = { TextButton(onClick = { showClearDialog = false }) { Text("Cancel") } },
             )
         }
     }
