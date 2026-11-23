@@ -939,11 +939,21 @@ class ReaderViewModel(
                         sourceTitle = manga.title,
                         sourceChapter = page.chapter.chapter.name,
                         pageNumber = page.number,
+                        mangaId = manga.id,
+                        sourceId = manga.source,
+                        chapterId = page.chapter.chapter.id,
+                        chapterUrl = page.chapter.chapter.url,
                     )
                 }.onSuccess {
                     closeDialog()
                     eventChannel.send(Event.PageStackAdded)
-                }.onFailure { eventChannel.send(Event.PageStackError) }
+                }.onFailure { failure ->
+                    if (failure is PageStackDuplicateChapterException) {
+                        eventChannel.send(Event.PageStackDuplicate)
+                    } else {
+                        eventChannel.send(Event.PageStackError)
+                    }
+                }
             } finally {
                 pageStackWrite.unlock()
             }
@@ -1148,6 +1158,7 @@ class ReaderViewModel(
         data class CopyImage(val uri: Uri) : Event
         data object PageStackAdded : Event
         data object PageStackError : Event
+        data object PageStackDuplicate : Event
     }
 }
 
