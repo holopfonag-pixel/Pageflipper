@@ -15,6 +15,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -43,6 +46,7 @@ class PageStackScreen : Screen() {
         val manager = remember { context.applicationContext.appGraph.pageStackManager }
         val items by manager.items.collectAsState()
         val scope = rememberCoroutineScope()
+        val snackbarHostState = remember { SnackbarHostState() }
         var showSaveDialog by remember { mutableStateOf(false) }
         var title by remember { mutableStateOf("") }
         var chapter by remember { mutableStateOf("Collected pages") }
@@ -58,6 +62,7 @@ class PageStackScreen : Screen() {
                     navigationIcon = { IconButton(onClick = navigator::pop) { Text("‹") } },
                 )
             },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
         ) { padding ->
             Column(
                 modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
@@ -85,7 +90,18 @@ class PageStackScreen : Screen() {
                                         TextButton(onClick = { scope.launch { manager.move(item.id, -1) } }) { Text("↑") }
                                         TextButton(onClick = { scope.launch { manager.move(item.id, 1) } }) { Text("↓") }
                                     }
-                                    TextButton(onClick = { scope.launch { manager.remove(item.id) } }) {
+                                    TextButton(onClick = {
+                                        scope.launch {
+                                            manager.remove(item.id)
+                                            val result = snackbarHostState.showSnackbar(
+                                                message = "Removed from page stack",
+                                                actionLabel = "Undo",
+                                            )
+                                            if (result == SnackbarResult.ActionPerformed) {
+                                                manager.undoRemove()
+                                            }
+                                        }
+                                    }) {
                                         Text("Remove")
                                     }
                                 }
